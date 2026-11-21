@@ -1165,11 +1165,7 @@ function renderApp(){
   const nOrd=Object.values(S.orders||{}).filter(o=>o.status==='new'||o.status==='prep'||o.status==='ready').length;
   const subs=(SUBS[ui.tab]||[]).filter(x=>isAdmin()||!['sessions','export'].includes(x[0]));if(!subs.find(x=>x[0]===curSub()))ui.sub[ui.tab]=subs[0]&&subs[0][0];
   const hn=Object.keys(S.holds).length;
-  const nPend=pendingCust().length;const nAlert=nOrd+nPend;
-  app.innerHTML=`<header class="head"><div class="brand">${brandMark()}<div style="min-width:0"><h1>${esc(S.cfg.name)}</h1><div class="date">${esc(who()||'Responsable')} · ${esc(isAdmin()?'Responsable':'Caissier')}${demo?' · formation':''}</div></div></div>
-    <div class="hr">${modeBadge()}<button class="iconbtn" data-a="drawer" aria-label="Menu">${ic('menu-2',20)}${nAlert?`<span class="nb">${nAlert}</span>`:''}</button></div></header>
-    <nav class="tbt ctabs" aria-label="Sections">${allowed.map(k=>`<button data-a="tab" data-v="${k}" aria-pressed="${ui.tab===k}">${TN[k]}${k==='sale'&&nOrd?` <i class="dbd2">${nOrd}</i>`:''}</button>`).join('')}</nav>
-    ${subs.length?`<div class="chips subchips" role="group" aria-label="${TN[ui.tab]}">${subs.map(x=>`<button class="chip" data-a="sub" data-v="${x[0]}" aria-pressed="${curSub()===x[0]}">${x[1]}${x[0]==='hold'&&hn?` (${hn})`:''}</button>`).join('')}</div>`:''}
+  app.innerHTML=`<header class="tb"><button class="tbm" data-a="drawer" aria-label="Menu">${ic('menu-2',26)}</button><nav class="tbt" aria-label="${TN[ui.tab]}">${subs.length?subs.map(x=>`<button data-a="sub" data-v="${x[0]}" aria-pressed="${curSub()===x[0]}">${x[1]}${x[0]==='hold'&&hn?` (${hn})`:''}</button>`).join(''):`<span class="tbh">${TN[ui.tab]}</span>`}</nav></header>
     <main id="main"></main><div id="bar"></div>${ui.drawer?drawerHtml(allowed,TN,NI,nOrd):''}`;
   renderMain();renderBar();stockWatch();
 }
@@ -3087,10 +3083,10 @@ try{var ac=new(window.AudioContext||window.webkitAudioContext)();[1318.5,1568,20
 (function(){var cap=null,hb=null,xw=null,busy=false;
 function loadH(cb){if(window.html2canvas)return cb();var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';s.onload=cb;s.onerror=function(){busy=false};document.head.appendChild(s)}
 function dot(on,by){var d=document.getElementById('xwDot');if(!on){if(d)d.remove();return}if(!d){d=document.createElement('div');d.id='xwDot';d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);top:calc(6px + env(safe-area-inset-top,0px));z-index:99998;background:#111;color:#fff;font:600 12px system-ui;padding:6px 12px;border-radius:99px;display:flex;gap:6px;align-items:center;pointer-events:none';document.body.appendChild(d)}d.innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:#e11d48"></span>Écran observé'+(by?' par '+esc(by):'')}
-function shot(){if(busy||document.hidden)return;busy=true;loadH(function(){if(!window.html2canvas){busy=false;return}html2canvas(document.documentElement,{scale:.6,logging:false,useCORS:true,width:innerWidth,height:innerHeight,x:scrollX,y:scrollY,ignoreElements:function(e){return e.id==='xwDot'||e.id==='xwRoot'}}).then(function(c){return Store.set('farces','_s_'+TAB,{id:'_s_'+TAB,kind:'maint',img:c.toDataURL('image/jpeg',.45),ts:Date.now()})}).catch(function(){}).then(function(){busy=false})})}
+function shot(){if(busy||document.hidden)return;busy=true;loadH(function(){if(!window.html2canvas){busy=false;return}var target=document.body;html2canvas(target,{scale:.42,logging:false,useCORS:true,width:innerWidth,height:innerHeight,x:scrollX,y:scrollY,backgroundColor:null,ignoreElements:function(e){return e.id==='xwDot'||e.id==='xwRoot'}}).then(function(c){return Store.set('farces','_s_'+TAB,{id:'_s_'+TAB,kind:'maint',img:c.toDataURL('image/jpeg',.35),ts:Date.now()})}).catch(function(){}).then(function(){busy=false})})}
 function stopCap(){clearInterval(cap);cap=null;dot(false)}
 window.xwSync=function(m){var r=m['_w_'+TAB],on=!!(r&&r.on&&Date.now()-r.ts<60000&&ui.area!=='customer');
-if(on){dot(true,r.by);if(!cap){cap=setInterval(function(){var q=FG['_w_'+TAB];if(!q||!q.on||Date.now()-q.ts>60000)stopCap();else shot()},3000);shot()}}else if(cap)stopCap();
+if(on){dot(true,r.by);if(!cap){cap=setInterval(function(){var q=FG['_w_'+TAB];if(!q||!q.on||Date.now()-q.ts>60000)stopCap();else shot()},2000);shot()}}else if(cap)stopCap();
 if(xw){var s=m['_s_'+xw.id];if(s&&s.ts!==xw.ts){xw.ts=s.ts;var i=document.getElementById('xwImg');if(i){i.src=s.img;i.style.display='block'}var w=document.getElementById('xwWait');if(w)w.style.display='none';var t=document.getElementById('xwSt');if(t)t.textContent='Mis à jour à '+new Date(s.ts).toLocaleTimeString('fr-FR')}}};
 function req(id,on){Store.set('farces','_w_'+id,{id:'_w_'+id,kind:'maint',on:on,by:(typeof who==='function'?who():'')||'Responsable',ts:Date.now()}).catch(function(){})}
 function close(){if(!xw)return;clearInterval(hb);req(xw.id,false);xw=null;var r=document.getElementById('xwRoot');if(r)r.remove()}
