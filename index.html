@@ -445,6 +445,11 @@ button,.btn,.chip{touch-action:manipulation}.btn{min-height:46px}html{overscroll
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:block}.kpi b{display:block;font:700 22px var(--font-display);font-variant-numeric:tabular-nums}.kpi span{font-size:12px;color:var(--muted)}
 .hosted #app{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
 .hosted .f007{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+@keyframes tkr{from{transform:translateY(100vh)}to{transform:translateY(-260%)}}
+@keyframes kfl{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+.fx.tk .rc{background:#fff;color:#111;font:12px monospace;width:230px;padding:12px;text-align:left;white-space:pre;animation:tkr 9s linear forwards}
+.fx.kb{background:#111;flex-direction:row;flex-wrap:wrap;gap:8px;align-content:center}.fx.kb i{font:700 20px monospace;background:#eee;color:#111;border-radius:8px;padding:12px 16px;font-style:normal;animation:kfl 3.5s ease-in forwards}
+html.sab-inv{filter:invert(1) hue-rotate(180deg)}@keyframes wob{from{transform:rotate(-3deg) translateY(-3px)}to{transform:rotate(3deg) translateY(3px)}}html.sab-wob .tile{animation:wob 1.1s ease-in-out infinite alternate}
 </style>
 
 </head><body>
@@ -718,6 +723,14 @@ ui.sub={sale:'items',tickets:'dash',products:'items',settings:'gen'};
 const curSub=()=>ui.sub[ui.tab];
 /* ====== Mode farce (compte secret « Agent X ») : 10 blagues de film, diffusées en direct ====== */
 const FARCES=[
+ ['call','Faux appel entrant','Le patron appelle : répondre ou refuser'],
+ ['tax','Faux contrôle fiscal','Un inspecteur « arrive »'],
+ ['cd','Compte à rebours bidon','10… 0 : il ne se passe rien'],
+ ['crash','Faux plantage de la caisse','« Ne répond plus » à l\'écran'],
+ ['tap','Désamorçage (interactif)','Il faut taper 5 fois pour s\'en sortir'],
+ ['talk','Caisse qui parle','Voix + bips : « client suspect détecté »'],
+ ['ticket','Faux ticket à rallonge','Un ticket interminable défile'],
+ ['keys','Clavier qui s\'enfuit','Les touches s\'échappent de l\'écran'],
  ['matrix','Pluie de code','Le code vert façon Matrix'],
  ['hack','Piratage de croissants','Barre de « piratage » absurde'],
  ['bsod','Écran bleu gourmand','La caisse a trop mangé'],
@@ -760,8 +773,8 @@ const FARCES=[
  ['a_maj','Mise à jour obligatoire','Fausse alerte réaliste, côté caisse'],
  ['a_msg','Message du patron','Fausse notification réaliste, côté caisse']
 ];
-const FCAT={matrix:'Classiques',hack:'Classiques',bsod:'Troll',chats:'Troll',intrus:'Panique',bombe:'Panique',flip:'Troll',disco:'Troll',glitch:'Classiques',agent:'Faux sérieux',access:'Classiques',typer:'Classiques',radar:'Classiques',enhance:'Classiques',ovni:'Troll',neige:'Troll',seisme:'Panique',laser:'Classiques',pluie:'Troll',maj:'Faux sérieux',urgence:'Panique',panique:'Panique',incendie:'Panique',patron:'Panique',e404:'Faux sérieux',memo:'Faux sérieux',quarantaine:'Faux sérieux',apero:'Troll',meteo:'Faux sérieux',police:'Panique',alien:'Troll',tornade:'Troll',sousmarin:'Classiques',a_print:'Alertes réalistes',a_batt:'Alertes réalistes',a_wifi:'Alertes réalistes',a_tiroir:'Alertes réalistes',a_stock:'Alertes réalistes',a_froid:'Alertes réalistes',a_maj:'Alertes réalistes',a_msg:'Alertes réalistes'};
-const FSECRET='0007';
+const FCAT={call:'Faux sérieux',tax:'Faux sérieux',cd:'Troll',crash:'Alertes réalistes',tap:'Panique',talk:'Troll',ticket:'Troll',keys:'Panique',matrix:'Classiques',hack:'Classiques',bsod:'Troll',chats:'Troll',intrus:'Panique',bombe:'Panique',flip:'Troll',disco:'Troll',glitch:'Classiques',agent:'Faux sérieux',access:'Classiques',typer:'Classiques',radar:'Classiques',enhance:'Classiques',ovni:'Troll',neige:'Troll',seisme:'Panique',laser:'Classiques',pluie:'Troll',maj:'Faux sérieux',urgence:'Panique',panique:'Panique',incendie:'Panique',patron:'Panique',e404:'Faux sérieux',memo:'Faux sérieux',quarantaine:'Faux sérieux',apero:'Troll',meteo:'Faux sérieux',police:'Panique',alien:'Troll',tornade:'Troll',sousmarin:'Classiques',a_print:'Alertes réalistes',a_batt:'Alertes réalistes',a_wifi:'Alertes réalistes',a_tiroir:'Alertes réalistes',a_stock:'Alertes réalistes',a_froid:'Alertes réalistes',a_maj:'Alertes réalistes',a_msg:'Alertes réalistes'};
+const FSECRET='0007';const fCode=()=>(FG&&FG._fcode&&FG._fcode.code)||FSECRET;
 let farceOn=false,farceSeen=null,farceBusy=false;
 function farceMuted(){try{return localStorage.getItem('caisse-farce-off')==='1'}catch(e){return false}}
 let NT={},maintOn=false,maintMsg='',farceTimers={},schedDone=new Set(),FSCHED={},hlock=null,nSeenInit=false;
@@ -781,15 +794,70 @@ function farceInit(){
     Object.keys(farceTimers).forEach(id=>{if(!m[id]){clearTimeout(farceTimers[id]);delete farceTimers[id]}});
     if(farceSeen===null){farceSeen=new Set(Object.keys(m));if(ui.area==='customer')renderApp();return}
     if(was!==maintOn&&ui.area==='customer')renderApp();
-    Object.values(m).sort((a,b)=>a.ts-b.ts).forEach(f=>{if(farceSeen.has(f.id))return;farceSeen.add(f.id);if(Date.now()-f.ts>=20000)return;
+    Object.values(m).sort((a,b)=>a.ts-b.ts).forEach(f=>{if(farceSeen.has(f.id))return;farceSeen.add(f.id);if(Date.now()-f.ts>=20000)return;if(f.to&&f.to!==TAB)return;
       if(f.kind==='annonce'){if(ui.area!=='customer'&&!bossDev())showBanner('Message du responsable',f.by||'',f.text)}
       else if(f.kind==='lockall'){if(!bossDev()&&ui.area!=='customer')hardLockStart()}
       else if(f.kind==='unlock'){if(hlock&&String(f.code)===hlock)hardUnlock()}
       else if(f.kind==='unlockall'){hardUnlock()}
-      else if(f.kind==='sched'||f.kind==='maint'){}
+      else if(f.kind==='sched'||f.kind==='maint'||f.kind==='presence'){}
+      else if(f.kind==='sab'){if(!bossDev()&&ui.area!=='customer')sabStart(f.modes,f.ms)}
+      else if(f.kind==='alerte'){if(bossDev()){showBanner('Alerte vente suspecte',f.by||'',f.text);try{navigator.vibrate([200,100,200])}catch(e){}}}
+      else if(f.kind==='reload'){if(!bossDev()&&ui.area!=='customer')setTimeout(()=>location.reload(),600)}
+      else if(f.kind==='beep'){if(!bossDev())beep()}
+      else if(f.kind==='theme'){if(!bossDev()&&ui.area!=='customer')sabStart(['theme'],60000)}
+      else if(f.kind==='blocktab'){if(!bossDev()&&ui.area!=='customer'){SAB.blk=f.tab;sabStart(['block'],180000)}}
+      else if(f.kind==='kick'){if(!bossDev()){ui.user=null;ui.sheet=null;renderApp();renderSheet();toast('Session fermée par le responsable')}}
       else farcePlay(f.kind,f.by)});
   });
 }
+const SAB={m:{},until:0,seed:1,t:null};
+const SABM=[['cart','Panier réorganisé','Les lignes du panier changent d\'ordre à l\'écran.'],['cats','Catégories mélangées','Les catégories changent de place.'],['pay','Paiements déplacés','Les boutons de moyen de paiement changent d\'ordre.'],['theme','Thème qui change','L\'écran s\'inverse (clair/sombre) toutes les 3 s.'],['wob','Tuiles qui bougent','Les tuiles d\'articles tremblent en continu.'],['shuffle','Articles mélangés','Les articles changent de place dans la grille, et se remélangent toutes les 15 s.'],['reverse','Ordre inversé','La grille des articles est à l\'envers.'],['hide','Articles qui disparaissent','Un tiers des articles se cachent de la grille.'],['keys','Clavier mélangé','Les touches du « Montant libre » changent de place.'],['tabs','Menu du bas mélangé','Les onglets (Vendre, Activité…) changent d\'ordre.']];
+const sabOn=k=>!!SAB.m[k]&&Date.now()<SAB.until;
+function sabRnd(salt){let x=(SAB.seed*9301+salt*49297)%233280||7;return()=>(x=(x*9301+49297)%233280)/233280}
+function sabShuffle(a,salt){const r=sabRnd(salt),b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+function sabList(l){
+  if(sabOn('hide')){const r=sabRnd(9);l=l.filter(()=>r()>.33)}
+  if(sabOn('reverse'))l=l.slice().reverse();
+  if(sabOn('shuffle'))l=sabShuffle(l,1);
+  return l;
+}
+function sabStart(modes,ms){
+  if(Date.now()>=SAB.until)SAB.m={};
+  (modes||[]).forEach(k=>SAB.m[k]=1);ms=Math.min(+ms||180000,600000);
+  SAB.until=Date.now()+ms;SAB.seed=Math.floor(Math.random()*1e6);
+  clearTimeout(SAB.t);SAB.t=setTimeout(()=>{SAB.m={};sabSync();renderApp()},ms+200);sabSync();renderApp();
+}
+function sabSync(){const d=document.documentElement;d.classList.toggle('sab-wob',sabOn('wob'));if(!sabOn('theme'))d.classList.remove('sab-inv')}
+function sabClear(){SAB.m={};SAB.until=0;clearTimeout(SAB.t);sabSync();renderApp()}
+setInterval(()=>{if(sabOn('theme'))document.documentElement.classList.toggle('sab-inv');else sabSync()},3000);
+function beep(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.connect(ac.destination);o.frequency.value=660;o.start();o.stop(ac.currentTime+.4)}catch(e){}}
+setInterval(()=>{if(sabOn('shuffle')){SAB.seed=Math.floor(Math.random()*1e6);if(ui.tab==='sale'&&!ui.sheet&&ui.area!=='customer')renderGrid()}},15000);
+const kpiHtml=(a,t)=>`<div class="kpis">${a.map(x=>`<button class="kpi" data-a="fTab" data-v="${t}"><b>${x[0]}</b><span>${x[1]}</span></button>`).join('')}</div>`;
+const fhid=()=>{try{return JSON.parse(localStorage.getItem('caisse-fhide')||'[]')}catch(e){return[]}};
+function stockKpis(){const A=activeProds().filter(p=>typeof p.stock==='number');return[[A.length,'Articles suivis'],[A.filter(p=>p.stock<=0).length,'Ruptures'],[A.filter(p=>p.stock>0&&p.stock<=alertOf(p)).length,'Stock bas'],[money(A.reduce((a,p)=>a+Math.max(0,p.stock)*p.price,0)),'Valeur de vente']]}
+function teamStats(){
+  const on=Object.values(FG).filter(f=>f.kind==='presence'&&Date.now()-f.ts<75000).map(f=>f.name);
+  const L=staffList().map(st=>{const v=salesList().filter(x=>sameDay(x.ts,Date.now())&&x.kind!=='refund'&&x.by===st.name);return{n:st.name,r:st.role,t:v.length,ca:v.reduce((a,x)=>a+x.total,0),on:on.includes(st.name)}});
+  return`${kpiHtml([[L.length,'Employés'],[L.filter(x=>x.on).length,'Connectés'],[L.reduce((a,x)=>a+x.t,0),'Tickets du jour']],'team')}${L.map(x=>`<div class="frow"><span><b>${esc(x.n)}</b> ${x.on?'🟢':'⚪'}<br><span class="lgt">${esc(x.r==='admin'?'Responsable':'Caissier')} · ${x.t} ticket${x.t>1?'s':''} · ${money(x.ca)}</span></span></div>`).join('')}`
+}
+function byChips(){const B=[...new Set(Object.values(FG).filter(f=>f.ts&&f.by&&f.kind!=='presence'&&f.kind!=='maint').map(f=>f.by))].slice(0,6);return`<div class="chips">${[''].concat(B).map(b=>`<button class="chip" data-a="jBy" data-v="${esc(b)}" aria-pressed="${(ui.jb||'')===b}">${b?esc(b):'Tous les auteurs'}</button>`).join('')}</div>`}
+const JTYPE=k=>{const t=ui.jf;return t==='farces'?FARCES.some(x=>x[0]===k):t==='sab'?k==='sab':t==='alerte'?k==='alerte':['annonce','lockall','unlock','unlockall','kick','reload','beep','theme','blocktab'].includes(k)};
+function homeExtra(){
+  const al=Object.values(FG).filter(f=>f.kind==='alerte').sort((a,b)=>b.ts-a.ts).slice(0,3);
+  const fav=favList().filter(k=>FARCES.some(x=>x[0]===k)).concat(['talk','ticket','keys','call']).filter((k,i,a)=>a.indexOf(k)===i).slice(0,4);
+  const m={};salesList().filter(x=>sameDay(x.ts,Date.now())&&x.kind!=='refund').forEach(x=>{const k=x.by||'Caisse';const o=m[k]||(m[k]={n:0,ca:0,max:0});o.n++;o.ca+=x.total;o.max=Math.max(o.max,x.total)});
+  const L=Object.entries(m).sort((a,b)=>b[1].ca-a[1].ca);
+  return`<h4 class="fsec">Alertes en direct</h4>${al.map(f=>`<div class="frow"><span><b>${esc(f.text)}</b><br><span class="lgt">${esc(f.by||'')} · ${esc(dtf.format(new Date(f.ts)))}</span></span></div>`).join('')||'<p class="sub">Aucune alerte pour le moment.</p>'}
+  <h4 class="fsec">Raccourcis farces</h4>${fav.map(k=>`<div class="frow"><span><b>${esc((FARCES.find(x=>x[0]===k)||[0,k])[1])}</b></span><button class="btn small" data-a="farceSend" data-v="${k}">Envoyer</button></div>`).join('')}
+  <h4 class="fsec">Badges du jour</h4><p class="sub">🏆 meilleur chiffre · 🛒 10 tickets ou plus · 💎 ticket de 100 € ou plus</p>${L.map(([k,o],i)=>`<div class="frow"><span><b>${esc(k)}</b><br><span class="lgt">${o.n} ticket${o.n>1?'s':''} · ${money(o.ca)}</span></span><span>${i===0?'🏆':''}${o.n>=10?'🛒':''}${o.max>=10000?'💎':''}</span></div>`).join('')||'<p class="sub">Pas encore de ventes aujourd\'hui.</p>'}
+  <h4 class="fsec">Code d'accès du panneau 007</h4><div class="field"><input id="newCode" inputmode="numeric" maxlength="4" placeholder="Nouveau code à 4 chiffres"></div><button class="btn ghost" data-a="codeSet">Changer le code</button>`;
+}
+function presenceBeat(){
+  if(demo||ui.area==='customer')return;
+  const t=(ui.cart||[]).reduce((a,l)=>a+(l.qty||1),0);
+  Store.set('farces','p_'+TAB,{id:'p_'+TAB,kind:'presence',tab:TAB,name:who()||'Caisse',page:ui.tab||'',cart:t,locked:!!hlock,ts:Date.now()}).catch(()=>{});
+}
+setInterval(presenceBeat,30000);setTimeout(presenceBeat,4000);
 function showBanner(kicker,title,text){
   let r=document.getElementById('annRoot');if(!r){r=document.createElement('div');r.id='annRoot';document.body.appendChild(r)}
   r.innerHTML=`<div class="ann" role="alert"><small>${esc(kicker)}</small><b>${esc(title)}</b><p>${esc(text)}</p><button class="btn small" data-a="annClose">OK</button></div>`;
@@ -806,7 +874,7 @@ function hardUnlock(){hlock=null;try{localStorage.removeItem('caisse-hlock')}cat
 const FCAP=45000;
 function farceOff(){clearTimeout(farcePlay.t);const r=document.getElementById('farceRoot');if(r)r.innerHTML='';document.documentElement.classList.remove('f-flip','f-glitch','f-disco','f-quake','f-twist')}
 function farcePlay(kind,by,tries){
-  if(kind==='stop'){farceOff();return}
+  if(kind==='stop'){farceOff();sabClear();return}
   if(farceMuted()&&ui.sheet!=='farce')return;
   if((ui.sheet==='pay'||ui.sheet==='done')&&(tries||0)<10){setTimeout(()=>farcePlay(kind,by,(tries||0)+1),3000);return}
   let r=document.getElementById('farceRoot');if(!r){r=document.createElement('div');r.id='farceRoot';document.body.appendChild(r)}
@@ -852,6 +920,14 @@ function farcePlay(kind,by,tries){
   else if(kind==='seisme'){document.documentElement.classList.add('f-quake');h=`<div class="fx note"><b>SECOUSSE MAGNITUDE 7,3</b></div>`;ms=4500}
   else if(kind==='laser'){h=`<div class="fx laser">${Array.from({length:7},(_,i)=>`<i style="top:${8+i*13}%;animation-delay:${i*.3}s"></i>`).join('')}</div>`;ms=6000}
   else if(kind==='pluie'){h=`<div class="fx rain">${Array.from({length:26},(_,i)=>`<span style="left:${(i*37)%96}%;animation-delay:${(i%9)*.3}s;animation-duration:${2.4+(i%4)*.5}s">🥐</span>`).join('')}</div>`;ms=6500}
+  else if(kind==='call'){h=`<div class="fx" style="background:#0b3d2e"><b>📞 Appel entrant</b><span>Le Patron · numéro masqué</span><div style="display:flex;gap:16px"><button class="btn" data-a="fxAct" data-v="ans">Répondre</button><button class="btn ghost" data-a="fxAct" data-v="no">Refuser</button></div></div>`;ms=15000;beep()}
+  else if(kind==='tax'){h=`<div class="fx urg" style="background:#1d3557"><b>CONTRÔLE FISCAL</b><span>Un inspecteur arrive dans 2 minutes. Cachez les croissants.</span></div>`;ms=7000}
+  else if(kind==='cd'){h=`<div class="fx urg"><b id="fcd2" style="font-size:80px">10</b><span id="fcd3">Compte à rebours en cours…</span></div>`;ms=13000;let n=10;const iv=setInterval(()=>{const e=document.getElementById('fcd2');if(!e){clearInterval(iv);return}n--;e.textContent=n;if(n<=0){clearInterval(iv);document.getElementById('fcd3').textContent='Il ne s\'est rien passé.'}},1000)}
+  else if(kind==='crash'){h=`<div class="fx" style="background:#eee;color:#111"><b>Caisse Pro ne répond plus</b><span>Le programme ne répond pas. Fermer ?</span><button class="btn" data-a="fxAct" data-v="no">Attendre</button></div>`;ms=8000;document.documentElement.classList.add('f-glitch')}
+  else if(kind==='tap'){h=`<div class="fx urg" style="background:#400"><b id="fxn">TAPEZ 5 FOIS</b><button class="btn" data-a="fxAct" data-v="tap" style="font-size:26px;padding:22px 36px">DÉSAMORCER</button></div>`;ms=20000;window.fxN=5}
+  else if(kind==='talk'){h=`<div class="fx urg" style="background:#123"><b>🔊 CAISSE VOCALE</b><span>Client suspect détecté. Veuillez sourire.</span></div>`;ms=7000;try{const u=new SpeechSynthesisUtterance('Attention. Client suspect détecté. Veuillez sourire.');u.lang='fr-FR';speechSynthesis.cancel();speechSynthesis.speak(u);const ac=new(window.AudioContext||window.webkitAudioContext)();[0,.3,.6].forEach(t=>{const o=ac.createOscillator();o.connect(ac.destination);o.frequency.value=880;o.start(ac.currentTime+t);o.stop(ac.currentTime+t+.15)})}catch(e){}}
+  else if(kind==='ticket'){h=`<div class="fx tk"><div class="rc">${Array.from({length:90},(_,i)=>(['CROISSANT','BAGUETTE','CAFE','PAIN CHOC','ECLAIR'][i%5]+' x1').padEnd(20,'.')+(1+(i*37)%9)+',20').join('\n')}\nTOTAL : TROP CHER</div></div>`;ms=9000}
+  else if(kind==='keys'){h=`<div class="fx kb">${Array.from({length:30},(_,i)=>`<i style="--dx:${Math.round(Math.random()*600-300)}px;--dy:${Math.round(Math.random()*900-450)}px;--r:${Math.round(Math.random()*720-360)}deg;animation-delay:${(i%10)*.12}s">${'AZERTYUIOP123456789'[i%19]}</i>`).join('')}</div>`;ms=5000}
   else if(kind==='maj'){h=`<div class="fx upd"><b>Mise à jour 97 / 97</b><p id="fup">Installation du talent…</p><div class="fbar"><i></i></div></div>`;ms=7000;const L=['Installation du talent…','Téléchargement de bonne humeur…','Optimisation du sourire…','Calibrage de la pause café…','Redémarrage imminent (non)…'];let i=0;const iv=setInterval(()=>{const e=document.getElementById('fup');if(!e){clearInterval(iv);return}e.textContent=L[++i%L.length]},1300)}
   r.innerHTML=h+f007Html();
   const agent=ui.sheet==='farce';
@@ -861,8 +937,8 @@ function farcePlay(kind,by,tries){
 }
 const favList=()=>{try{return JSON.parse(localStorage.getItem('caisse-ffav')||'[]')}catch(e){return[]}};
 function farceGridHtml(){
-  const q=norm(ui.fq||''),fav=favList(),vis=f=>!q||norm(f[1]+' '+f[2]).indexOf(q)>=0;
-  const row=f=>`<div class="frow"><button class="star" data-a="fFav" data-v="${f[0]}" aria-pressed="${fav.includes(f[0])}" aria-label="Favori">★</button><span><b>${esc(f[1])}</b><br><span class="sub">${esc(f[2])}</span></span><button class="btn ghost small" data-a="farcePrev" data-v="${f[0]}">Aperçu</button><button class="btn small" data-a="farceSend" data-v="${f[0]}">Envoyer</button></div>`;
+  const q=norm(ui.fq||''),fav=favList(),vis=f=>!fhid().includes(f[0])&&(!q||norm(f[1]+' '+f[2]).indexOf(q)>=0);
+  const row=f=>`<div class="frow"><button class="star" data-a="fFav" data-v="${f[0]}" aria-pressed="${fav.includes(f[0])}" aria-label="Favori">★</button><span><b>${esc(f[1])}</b><br><span class="sub">${esc(f[2])}</span></span><button class="btn ghost small" data-a="farcePrev" data-v="${f[0]}">Aperçu</button><button class="btn small" data-a="farceSend" data-v="${f[0]}">Envoyer</button><button class="btn ghost small" data-a="fHide" data-v="${f[0]}" aria-label="Masquer">✕</button></div>`;
   const grp=(g,l)=>l.length?`<h4 class="fsec">${g}</h4>`+l.map(row).join(''):'';
   const h=grp('Favoris',FARCES.filter(f=>fav.includes(f[0])&&vis(f)))+['Alertes réalistes','Panique','Troll','Faux sérieux','Classiques'].map(g=>grp(g,FARCES.filter(f=>FCAT[f[0]]===g&&vis(f)))).join('');
   return h||'<p class="sub">Aucune farce trouvée.</p>';
@@ -871,19 +947,21 @@ function sheetFarce(){
   if(!ui.farceOk)return`${sh('Accès Agent X')}<p class="muted">Code secret à 4 chiffres.</p><div class="field"><input id="fCode" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"></div><div class="hint err" id="fErr"></div><button class="btn" data-a="farceLogin">Entrer</button>`;
   const T=ui.fTab||'home';
   const nP=pendingCust().length,nS=stockAlerts().length;
-  const tabs=`<div class="chips" role="group">${[['home','Accueil'],['accounts','Comptes'+(nP?' ('+nP+')':'')],['stock','Stock'+(nS?' ('+nS+')':'')],['farces','Farces'],['team','Équipe'],['notifs','Notifs'],['plan','Plan'],['log','Journal']].map(x=>`<button class="chip" data-a="fTab" data-v="${x[0]}" aria-pressed="${T===x[0]}">${x[1]}</button>`).join('')}</div>`;
+  const tabs=`<div class="chips" role="group">${[['home','Accueil'],['accounts','Comptes'+(nP?' ('+nP+')':'')],['stock','Stock'+(nS?' ('+nS+')':'')],['farces','Farces'],['ctl','Caisses'],['team','Équipe'],['notifs','Notifs'],['plan','Plan'],['log','Journal']].map(x=>`<button class="chip" data-a="fTab" data-v="${x[0]}" aria-pressed="${T===x[0]}">${x[1]}</button>`).join('')}</div>`;
   let body='';
   if(T==='home'){
     const d=stats(salesList().filter(x=>sameDay(x.ts,Date.now())));const nO=Object.values(S.orders||{}).filter(o=>o.status==='new'||o.status==='ready').length;
     const k=(v,l,t)=>`<button class="kpi" data-a="fTab" data-v="${t}"><b>${v}</b><span>${l}</span></button>`;
     body=`<div class="kpis">${k(money(d.t.net),'Chiffre du jour','home')}${k(d.t.nSales,'Tickets du jour','home')}${k(money(d.avg),'Panier moyen','home')}${k(nO,'Commandes en ligne','home')}${k(nP,'Comptes à valider','accounts')}${k(nS,'Alertes de stock','stock')}</div>
     <p class="sub">Clients inscrits : ${custList().filter(c=>c.online&&custOk(c)).length} · Articles actifs : ${activeProds().length} · Équipe : ${staffList().length}</p>
+    ${homeExtra()}
     <button class="btn ghost" data-a="notifAsk">Activer les notifications de l'appareil</button>`;
   }else if(T==='stock'){
     const L=activeProds().filter(p=>typeof p.stock==='number').sort((a,b)=>(a.stock-alertOf(a))-(b.stock-alertOf(b))).slice(0,30);
-    body=`<p class="sub">Triés du plus urgent au moins urgent. Une alerte s'affiche dès qu'un article passe sous son seuil.</p>${L.map(p=>`<div class="frow"><span><b>${esc(p.name)}</b><br><span class="${p.stock<=alertOf(p)?'':'lgt'}" style="${p.stock<=alertOf(p)?'color:var(--danger);font-weight:600;font-size:12px':''}">${p.stock<=0?'Rupture':'Stock : '+p.stock}</span></span><button class="btn ghost small" data-a="stkAdj" data-id="${esc(p.id)}" data-d="-1">−1</button><button class="btn small" data-a="stkAdj" data-id="${esc(p.id)}" data-d="1">+1</button><button class="btn small" data-a="stkAdj" data-id="${esc(p.id)}" data-d="10">+10</button></div>`).join('')||'<p class="sub">Aucun article avec stock suivi.</p>'}`;
+    body=`${kpiHtml(stockKpis(),'stock')}<p class="sub">Triés du plus urgent au moins urgent. Une alerte s'affiche dès qu'un article passe sous son seuil.</p>${L.map(p=>`<div class="frow"><span><b>${esc(p.name)}</b><br><span class="${p.stock<=alertOf(p)?'':'lgt'}" style="${p.stock<=alertOf(p)?'color:var(--danger);font-weight:600;font-size:12px':''}">${p.stock<=0?'Rupture':'Stock : '+p.stock}</span></span><button class="btn ghost small" data-a="stkAdj" data-id="${esc(p.id)}" data-d="-1">−1</button><button class="btn small" data-a="stkAdj" data-id="${esc(p.id)}" data-d="1">+1</button><button class="btn small" data-a="stkAdj" data-id="${esc(p.id)}" data-d="10">+10</button></div>`).join('')||'<p class="sub">Aucun article avec stock suivi.</p>'}`;
   }else if(T==='farces'){
-    body=`<p class="sub">« Aperçu » joue l'effet ici seulement. « Envoyer » le joue partout. Seul l'arrêt d'urgence le coupe (sinon il disparaît après 45 s). ★ = favori.</p>
+    body=`${kpiHtml([[FARCES.length,'Farces'],[fhid().length,'Masquées'],[SABM.length,'Sabotages']],'farces')}${fhid().length?'<button class="btn ghost small" data-a="fUnhide">Réafficher les farces masquées</button>':''}<p class="sub">« Aperçu » joue l'effet ici seulement. « Envoyer » le joue partout. Seul l'arrêt d'urgence le coupe (sinon il disparaît après 45 s). ★ = favori.</p>
+    <div class="panel"><b>Mode surprise</b><p class="sub">Une farce au hasard part toutes les 5 à 20 min vers toutes les caisses, tant que ce panneau reste ouvert sur cet appareil.</p><button class="btn ${ui.sur?'':'ghost'}" data-a="surprise">${ui.sur?'Désactiver':'Activer'}</button></div>
     <div class="fsr"><input id="fq" type="search" placeholder="Rechercher une farce…" value="${esc(ui.fq||'')}" autocomplete="off"><button class="btn small" data-a="farceRand">Surprise</button></div>
     <div class="fgrid">${farceGridHtml()}</div>
     <label class="chk"><input type="checkbox" id="fMute"${farceMuted()?' checked':''}><span>Ne pas afficher les farces sur cet appareil</span></label>`;
@@ -891,13 +969,20 @@ function sheetFarce(){
     const P=pendingCust(),R=custList().filter(c=>c.online&&custOk(c));
     const who=c=>`<span><b>${esc(c.name)}</b><br><span class="lgt">${esc(c.phone||'')} · ${esc(dtf.format(new Date(c.reqAt||c.created||Date.now())))}</span></span>`;
     body=`<p class="sub">Un client ne peut se connecter à la boutique en ligne qu'après votre approbation.</p><h4 class="fsec">En attente (${P.length})</h4>${P.map(c=>`<div class="frow">${who(c)}<button class="btn ghost small" data-a="acRefuse" data-id="${esc(c.id)}">Refuser</button><button class="btn small" data-a="acOk" data-id="${esc(c.id)}">Approuver</button></div>`).join('')||'<p class="sub">Aucune demande en attente.</p>'}<h4 class="fsec">Comptes actifs (${R.length})</h4>${R.map(c=>`<div class="frow">${who(c)}<button class="btn ghost small" data-a="acRefuse" data-id="${esc(c.id)}">Suspendre</button></div>`).join('')||'<p class="sub">Aucun compte actif.</p>'}`;
+  }else if(T==='ctl'){
+    const on=Object.values(FG).filter(f=>f.kind==='presence'&&Date.now()-f.ts<75000).sort((a,b)=>a.name.localeCompare(b.name));
+    const al=Object.values(FG).filter(f=>f.kind==='alerte').sort((a,b)=>b.ts-a.ts).slice(0,8);
+    body=`${kpiHtml([[on.length,'Connectées'],[on.filter(c=>c.locked).length,'Verrouillées'],[al.length,'Alertes récentes']],'ctl')}<p class="sub">Caisses ouvertes en ce moment (actualisé toutes les 30 s). Chaque action ne vise que la caisse choisie.</p><div class="field"><textarea id="ctText" rows="2" maxlength="240" placeholder="Message pour une seule caisse…"></textarea></div><button class="btn ghost small" data-a="fTab" data-v="ctl">Actualiser</button>
+    <div class="field"><select id="ctBlk"><option value="tickets">Onglet à bloquer : Activité</option><option value="products">Catalogue</option><option value="stock">Stock</option><option value="settings">Paramètres</option></select></div><h4 class="fsec">Connectés (${on.length})</h4>${on.map(c=>`<div class="panel"><b>${esc(c.name)}${c.tab===TAB?' (cet appareil)':''}</b><br><span class="lgt">Écran : ${esc(({sale:'Vente',tickets:'Tickets',products:'Produits',stock:'Stock',settings:'Réglages'})[c.page]||c.page||'—')} · Panier : ${c.cart||0} article${c.cart>1?'s':''}${c.locked?' · 🔒 verrouillée':''} · vu à ${esc(dtf.format(new Date(c.ts)))}</span><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><button class="btn small" data-a="ctMsg" data-id="${esc(c.tab)}">Message</button><button class="btn ghost small" data-a="ctLock" data-id="${esc(c.tab)}">Verrouiller</button><button class="btn ghost small" data-a="ctKick" data-id="${esc(c.tab)}">Déconnecter</button><button class="btn ghost small" data-a="ctReload" data-id="${esc(c.tab)}">Recharger</button><button class="btn ghost small" data-a="ctBeep" data-id="${esc(c.tab)}">Son</button><button class="btn ghost small" data-a="ctTheme" data-id="${esc(c.tab)}">Thème</button><button class="btn ghost small" data-a="ctBlock" data-id="${esc(c.tab)}">Bloquer l'onglet</button></div></div>`).join('')||'<p class="sub">Aucune caisse connectée.</p>'}
+    <h4 class="fsec">Sabotages de menu</h4><p class="sub">Ils réorganisent seulement l'affichage : rien n'est modifié en base, aucun prix n'est touché. Ils s'arrêtent seuls après 3 min ou avec l'arrêt d'urgence.</p><div class="field"><select id="sabTo"><option value="">Toutes les caisses</option>${on.filter(c=>c.tab!==TAB).map(c=>`<option value="${esc(c.tab)}">${esc(c.name)}</option>`).join('')}</select></div>${SABM.map(m=>`<div class="frow"><span><b>${m[1]}</b><br><span class="sub">${m[2]}</span></span><button class="btn small" data-a="sabSend" data-v="${m[0]}">Lancer</button></div>`).join('')}<button class="btn ghost" data-a="farceStop">Arrêt d'urgence</button>
+    <h4 class="fsec">Alertes ventes suspectes</h4><p class="sub">Retour ≥ 50 €, remise ≥ 50 % ou ticket ≥ 500 €. Une bannière s'affiche ici dès qu'il y en a une.</p>${al.map(f=>`<div class="frow"><span><b>${esc(f.text)}</b><br><span class="lgt">${esc(f.by||'')} · ${esc(dtf.format(new Date(f.ts)))}</span></span></div>`).join('')||'<p class="sub">Aucune alerte.</p>'}`;
   }else if(T==='log'){
-    const lab=k=>(FARCES.find(x=>x[0]===k)||[0,{annonce:'Annonce équipe',lockall:'Verrouillage général',unlock:'Déverrouillage',unlockall:'Tout déverrouillé',stop:'Arrêt d\'urgence'}[k]||k])[1];
-    const L=Object.values(FG).filter(f=>f.ts&&f.kind&&f.kind!=='maint'&&f.kind!=='sched').sort((a,b)=>b.ts-a.ts).slice(0,25);
-    body=`<p class="sub">Les 25 derniers événements envoyés. Vider le journal ne coupe rien.</p>${L.map(f=>`<div class="frow"><span><b>${esc(lab(f.kind))}</b><br><span class="lgt">${esc(f.by||'')} · ${esc(dtf.format(new Date(f.ts)))}</span></span>${FARCES.some(x=>x[0]===f.kind)?`<button class="btn ghost small" data-a="farcePrev" data-v="${esc(f.kind)}">Revoir</button>`:''}</div>`).join('')||'<p class="sub">Journal vide.</p>'}${L.length?'<button class="btn ghost" data-a="logClear">Vider le journal</button>':''}`;
+    const lab=k=>(FARCES.find(x=>x[0]===k)||[0,{annonce:'Annonce équipe',lockall:'Verrouillage général',unlock:'Déverrouillage',unlockall:'Tout déverrouillé',stop:'Arrêt d\'urgence',alerte:'Alerte vente suspecte',sab:'Sabotage de menu',reload:'Rechargement forcé',beep:'Son envoyé',theme:'Thème forcé',blocktab:'Onglet bloqué',kick:'Déconnexion forcée'}[k]||k])[1];
+    const L=Object.values(FG).filter(f=>f.ts&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence').sort((a,b)=>b.ts-a.ts).filter(f=>(!ui.jf||JTYPE(f.kind))&&(!ui.jb||f.by===ui.jb)).slice(0,100);
+    body=`<div class="chips">${[['','Tous'],['farces','Farces'],['sab','Sabotages'],['alerte','Alertes'],['ctl','Contrôle']].map(x=>`<button class="chip" data-a="jFilt" data-v="${x[0]}" aria-pressed="${(ui.jf||'')===x[0]}">${x[1]}</button>`).join('')}</div>${byChips()}<button class="btn ghost small" data-a="jCsv">Exporter (CSV)</button><p class="sub">Les 100 derniers événements envoyés. Vider le journal ne coupe rien.</p>${L.map(f=>`<div class="frow"><span><b>${esc(lab(f.kind))}</b><br><span class="lgt">${esc(f.by||'')} · ${esc(dtf.format(new Date(f.ts)))}</span></span>${FARCES.some(x=>x[0]===f.kind)?`<button class="btn ghost small" data-a="farcePrev" data-v="${esc(f.kind)}">Revoir</button>`:''}</div>`).join('')||'<p class="sub">Journal vide.</p>'}${L.length?'<button class="btn ghost" data-a="logClear">Vider le journal</button>':''}`;
   }else if(T==='team'){
     const st=staffList();
-    body=`<div class="panel"><h3>Annonce à l'équipe</h3><p class="sub">Un message en direct sur toutes les caisses ouvertes. Chacun peut le fermer avec OK.</p><div class="field"><textarea id="anText" rows="3" maxlength="240" placeholder="Réunion à 14 h, pensez à fermer le tiroir…"></textarea></div><button class="btn" data-a="annSend">Envoyer à l'équipe</button></div>
+    body=`${teamStats()}<div class="panel"><h3>Annonce à l'équipe</h3><p class="sub">Un message en direct sur toutes les caisses ouvertes. Chacun peut le fermer avec OK.</p><div class="field"><textarea id="anText" rows="3" maxlength="240" placeholder="Réunion à 14 h, pensez à fermer le tiroir…"></textarea></div><button class="btn" data-a="annSend">Envoyer à l'équipe</button></div>
     <div class="panel"><h3>Verrouiller les caisses</h3><p class="sub">Toutes les caisses ouvertes se bloquent. Chacune affiche un numéro d'erreur à 6 chiffres. Seul le responsable peut les rouvrir en saisissant ce numéro ici (ou « Tout déverrouiller »).</p><button class="btn danger" data-a="lockAll">Verrouiller toutes les caisses</button>
     <div class="field" style="margin-top:12px"><label class="lbl" for="ulCode">Numéro d'erreur affiché sur la caisse</label><input id="ulCode" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="482 913"></div><button class="btn ghost" data-a="unlockDev">Déverrouiller cet appareil-là</button><button class="btn ghost" data-a="unlockAll">Tout déverrouiller</button></div>
     <div class="panel"><h3>Boutique en ligne</h3><p class="sub">${maintOn?'Actuellement en pause pour les clients.':'Actuellement ouverte.'}</p><div class="field"><input id="mtMsg" maxlength="120" value="${esc(maintMsg||'Nous revenons très vite.')}"></div><button class="btn ${maintOn?'':'ghost'}" data-a="maintToggle">${maintOn?'Rouvrir la boutique en ligne':'Mettre en pause (mode maintenance)'}</button></div>
@@ -969,7 +1054,9 @@ function renderApp(){
   if(locked()){renderLock(app);return}
   const names={sale:'Caisse',tickets:'Activité',z:'Clôture',products:'Produits',settings:'Réglages'};
   const allowed=isAdmin()?['sale','tickets','products','stock','settings']:['sale','tickets'];
+  if(sabOn('block')&&SAB.blk&&SAB.blk!=='sale')allowed.splice(0,allowed.length,...allowed.filter(k=>k!==SAB.blk));
   if(allowed.indexOf(ui.tab)<0)ui.tab='sale';
+  if(sabOn('tabs'))allowed.splice(0,allowed.length,...sabShuffle(allowed,5));
   applyAccent('');
   const NI={sale:'shopping-bag',tickets:'chart-bar',products:'folder',stock:'archive',settings:'settings'};
   const TN={sale:'Vendre',tickets:'Activité',products:'Catalogue',stock:'Gestion de stock',settings:'Paramètres'};
@@ -1038,7 +1125,7 @@ function holdsInline(){
     return`<div class="paid"><div><div class="nm">${esc(h.name||'Sans nom')}</div><div class="sub">${n} article${n>1?'s':''} · ${esc(hm.format(new Date(h.ts)))}${h.by?' · '+esc(h.by):''}</div></div><button class="link" data-a="resumeHold" data-id="${esc(h.id)}">Reprendre</button><button class="link" data-a="delHold" data-id="${esc(h.id)}" style="color:var(--danger)">Supprimer</button></div>`}).join('');
 }
 function catsInline(go){
-  const cs=catChips().filter(c=>c!=='Tout'&&c!=='★ Favoris');
+  const cs=(x=>sabOn('cats')?sabShuffle(x,13):x)(catChips().filter(c=>c!=='Tout'&&c!=='★ Favoris'));
   if(!cs.length)return`<div class="empty"><b>Pas encore de catégorie</b><span>Les catégories se créent avec les articles.</span></div>`;
   return`<div class="grid">${cs.map(c=>{const n=activeProds().filter(p=>(p.cat||'Divers')===c).length;return`<button class="tile cat" data-a="${go}" data-v="${esc(c)}" style="--th:${hueOf(c)}"><span class="vis">${ic('folder',26)}</span><span class="tx"><span class="nm">${esc(c)}</span><span class="st">${n} article${n>1?'s':''}</span></span></button>`}).join('')}</div>`;
 }
@@ -1091,7 +1178,7 @@ function renderMain(){
 }
 function keysHtml(){
   const c=parseInt(ui.kp||'0',10)||0;const vat=ui.kpVat==null?20:ui.kpVat;
-  const keys=['1','2','3','4','5','6','7','8','9','00','0','del'];
+  const keys=sabOn('keys')?sabShuffle(['1','2','3','4','5','6','7','8','9','00','0','del'],3):['1','2','3','4','5','6','7','8','9','00','0','del'];
   return`<div class="kdisp"><span class="kl">Montant à encaisser</span><span class="kv">${money(c)}</span></div>
   ${franchise()?'':`<div class="chips">${[20,10,5.5].map(r=>`<button class="chip" data-a="kpVat" data-v="${r}" aria-pressed="${vat===r}">TVA ${pctTxt(r)} %</button>`).join('')}</div>`}
   <div class="kgrid">${keys.map(k=>`<button data-a="kpKey" data-v="${k}"${k==='del'?' aria-label="Effacer"':''}>${k==='del'?ic('arrow-left',24):k}</button>`).join('')}</div>
@@ -1101,7 +1188,8 @@ const inCart=id=>ui.cart.filter(x=>x.id===id).reduce((a,x)=>a+(x.w?1:x.qty),0);
 function renderGrid(){
   const g=$('#grid');if(!g)return;
   const q=norm(ui.q.trim());const img=cf('tiles')==='images';
-  const list=activeProds().slice().sort((a,b)=>ui.sortP==='n'?a.name.localeCompare(b.name,'fr'):0).filter(p=>(ui.cat==='Tout'||(ui.cat==='★ Favoris'?p.fav:(p.cat||'Divers')===ui.cat))&&(!q||norm(p.name).includes(q)||norm(p.sku).includes(q)));
+  let list=activeProds().slice().sort((a,b)=>ui.sortP==='n'?a.name.localeCompare(b.name,'fr'):0).filter(p=>(ui.cat==='Tout'||(ui.cat==='★ Favoris'?p.fav:(p.cat||'Divers')===ui.cat))&&(!q||norm(p.name).includes(q)||norm(p.sku).includes(q)));
+  list=sabList(list);
   g.innerHTML=list.length?list.map(p=>{
     const q2=inCart(p.id);const tracked=typeof p.stock==='number'&&!p.weighed;const out=tracked&&p.stock-q2<=0;
     const st=p.weighed?'<span class="st">Vendu au poids</span>':tracked?`<span class="st${p.stock<=alertOf(p)?' low':''}">${p.stock<=0?'Épuisé':'Stock : '+p.stock}</span>`:'<span class="st"></span>';
@@ -1259,6 +1347,7 @@ function pageData(){
     <button class="btn ghost" data-a="exportCompta"${dis}>Journal comptable par jour (CSV)</button><button class="btn ghost" data-a="exportClients"${dis}>Clients (CSV)</button>
     <button class="btn ghost" data-a="backup"${dis}>Sauvegarde complète (JSON)</button><label class="btn ghost" for="restFile" style="cursor:pointer">Restaurer catalogue, clients et bons</label><input id="restFile" type="file" accept="application/json,.json" style="display:none">${downloads?'':'<p class="sub">Le téléchargement n\'est pas disponible dans cette vue.</p>'}</div>
     <div class="panel"><h3>Intégrité des tickets</h3><p class="sub">Chaque ticket porte une empreinte SHA-256 liée à celle du ticket précédent. Les tickets ne sont jamais modifiés : une erreur se corrige par un retour.</p>${n}<button class="btn ghost" data-a="verify">Vérifier la chaîne</button></div>
+    ${isAdmin()?`<div class="panel"><h3 style="color:var(--danger)">Zone de danger</h3><p class="sub">Supprime définitivement tous les articles de la base (${Object.keys(S.products).length} actuellement). Les tickets, clôtures, clients, bons et mouvements de stock ne sont pas touchés.</p><button class="btn ghost" style="color:var(--danger)" data-a="openPurge">Supprimer tous les articles…</button></div>`:''}
     <p class="sub" style="text-align:center">${db?'Données enregistrées dans la base partagée de cette page : toute personne autorisée voit les mêmes ventes.':'Données conservées dans ce navigateur uniquement.'}</p>`;
 }
 function pageTraining(){
@@ -1283,7 +1372,7 @@ const sh=title=>`<div class="sh"><h2>${title}</h2><button class="x" data-a="clos
 function sheetCart(){
   const t=cartTotals(),d=ui.discount,cl=curClient();
   const n=t.count;
-  const lines=t.lines.map(l=>{const single=l.w||l.free;return`<div class="tl2"><span class="q">${l.w?'1':l.qty}</span><div class="n"><div class="nm">${esc(l.name)}</div>${l.w?`<div class="sub">${esc(String(l.w))} kg</div>`:''}</div>
+  const lines=(sabOn('cart')?sabShuffle(t.lines,17):t.lines).map(l=>{const single=l.w||l.free;return`<div class="tl2"><span class="q">${l.w?'1':l.qty}</span><div class="n"><div class="nm">${esc(l.name)}</div>${l.w?`<div class="sub">${esc(String(l.w))} kg</div>`:''}</div>
     ${single?`<button class="link" data-a="rmk" data-k="${esc(l.k)}" aria-label="Retirer ${esc(l.name)}">Retirer</button>`:`<div class="step"><button data-a="dec" data-id="${esc(l.id)}" aria-label="Retirer un ${esc(l.name)}">−</button><button data-a="inc" data-id="${esc(l.id)}" aria-label="Ajouter un ${esc(l.name)}">+</button></div>`}
     <span class="amt">${money(l.price*l.qty)}</span></div>`}).join('');
   const extra=(cl?`<div class="tl2 x"><span class="n">Client : ${esc(cl.name)}</span></div>`:'')+(d?`<div class="tl2 x"><span class="n">Remise</span><span class="amt">−${money(t.disc)}</span></div>`:'');
@@ -1354,7 +1443,7 @@ function sheetPay(){
     return`<div class="fh"><button class="fx2" data-a="${p.payments.length?'payBackKeep':'backCart'}" aria-label="Retour">${ic('x',24)}</button><b>Paiement</b><span style="width:44px"></span></div>
       <div class="fl"><div class="kdisp2"><span class="kl">Reste à payer</span><span class="kv">${money(rem)}</span></div>${list}
       <div class="xl" style="padding:8px 20px 0">Choisissez un moyen de paiement</div>
-      <div class="opts">${pm.includes('cash')?`<button data-a="payExpress" data-m="cash" data-v="${rem}">${ic('cash',22)}<span>Espèces · montant exact</span></button>`:''}${pm.map(k=>`<button data-a="payKOpen" data-v="${k}">${ic(METH_IC[k],22)}<span>${esc(METHODS[k]||SHORTM[k])}</span><span class="chev">${ic('chevron-right',18)}</span></button>`).join('')}</div></div>`;
+      <div class="opts">${pm.includes('cash')?`<button data-a="payExpress" data-m="cash" data-v="${rem}">${ic('cash',22)}<span>Espèces · montant exact</span></button>`:''}${(sabOn('pay')?sabShuffle(pm,7):pm).map(k=>`<button data-a="payKOpen" data-v="${k}">${ic(METH_IC[k],22)}<span>${esc(METHODS[k]||SHORTM[k])}</span><span class="chev">${ic('chevron-right',18)}</span></button>`).join('')}</div></div>`;
   }
   const change=p.payments.reduce((a,x)=>a+(x.change||0),0);
   return`<div class="fh"><button class="fx2" data-a="backCart" aria-label="Retour">${ic('x',24)}</button><b>Paiement</b><span style="width:44px"></span></div>
@@ -1474,6 +1563,12 @@ function sheetProduct(){
     ${ui.editing&&p?(p.active===false?`<button class="btn ghost" data-a="reactivate">Remettre au catalogue</button>`:`<button class="btn ghost" data-a="archive">Retirer du catalogue</button>`):''}
     </div><div class="ff"><div class="pay2"><button class="pg" data-a="saveProduct">Enregistrer</button></div></div>`;
 }
+function sheetPurge(){
+  const n=Object.keys(S.products).length;
+  return`${sh('Supprimer tous les articles')}<div class="notice" style="border-color:var(--danger)"><b>Action définitive.</b> ${n} article${n>1?'s':''} ser${n>1?'ont':'a'} effacé${n>1?'s':''} de la base. Seuls les articles sont concernés : les tickets déjà émis, les clôtures, les clients, les bons d'achat et les mouvements de stock restent intacts. Pensez à faire une « Sauvegarde complète (JSON) » avant.</div>
+   <div class="field"><label class="lbl" for="purgeConf">Tapez SUPPRIMER pour confirmer</label><input id="purgeConf" autocomplete="off" autocapitalize="characters"></div><p class="sub" id="purgeErr" style="color:var(--danger)"></p>
+   <button class="btn" style="background:var(--danger);color:#fff" data-a="doPurge"${ui.busy||!n?' disabled':''}>${ui.busy?'Suppression…':'Supprimer définitivement'}</button><button class="btn ghost" data-a="close">Annuler</button>`;
+}
 function sheetRestore(){
   const d=ui.rest||{};const n=o=>Object.keys(o||{}).length;
   return`${sh('Restaurer une sauvegarde')}<p class="sub">Le fichier contient ${n(d.products)} article${n(d.products)>1?'s':''}, ${n(d.customers)} client${n(d.customers)>1?'s':''} et ${n(d.vouchers)} bon${n(d.vouchers)>1?'s':''}. Les éléments existants avec le même identifiant sont remplacés.</p>
@@ -1507,7 +1602,7 @@ function renderSheet(){
   const root=$('#sheetRoot');
   if(!ui.sheet){root.innerHTML='';lastSheet=null;return}
   const old=root.querySelector('.sheet');const top=old&&lastSheet===ui.sheet?old.scrollTop:0;
-  const map={cart:sheetCart,discount:sheetDiscount,pay:sheetPay,done:sheetDone,ticket:sheetTicket,z:sheetZ,refund:sheetRefund,product:sheetProduct,holdSave:sheetHoldSave,holds:sheetHolds,weight:sheetWeight,imp:sheetImport,staff:sheetStaff,move:sheetMove,free:sheetFree,pickclient:sheetPickClient,client:sheetClient,starter:sheetStarter,cbasket:sheetCBasket,orders:sheetOrders,farce:sheetFarce,cartopt:sheetCartOpt,gift:sheetGift,tip:sheetTip,restore:sheetRestore};
+  const map={cart:sheetCart,discount:sheetDiscount,pay:sheetPay,done:sheetDone,ticket:sheetTicket,z:sheetZ,refund:sheetRefund,product:sheetProduct,holdSave:sheetHoldSave,holds:sheetHolds,weight:sheetWeight,imp:sheetImport,staff:sheetStaff,move:sheetMove,free:sheetFree,pickclient:sheetPickClient,client:sheetClient,starter:sheetStarter,cbasket:sheetCBasket,orders:sheetOrders,farce:sheetFarce,cartopt:sheetCartOpt,gift:sheetGift,tip:sheetTip,restore:sheetRestore,purge:sheetPurge};
   root.innerHTML=`<div class="backdrop" data-a="backdrop"><div class="sheet${lastSheet!==ui.sheet?' anim':''}${ui.sheet==='cart'||ui.sheet==='pay'||ui.sheet==='product'||ui.sheet==='gift'||ui.sheet==='tip'?' full':ui.sheet==='cartopt'?' opt':''}" role="dialog" aria-modal="true">${map[ui.sheet]()}</div></div>`;
   const sheet=root.querySelector('.sheet');if(top)sheet.scrollTop=top;
   lastSheet=ui.sheet;if(ui.sheet==='pay')updatePayHint();
@@ -1543,6 +1638,8 @@ async function commit(build,after){
     const nc=Object.assign({},c,{lastN:n,lastHash:rec.hash});
     await Store.set('meta','counter',nc);
     S.counter=nc;S.sales[pad6(n)]=rec;
+    try{const r=rec.sub?((rec.disc||0)/rec.sub):0,why=rec.kind==='refund'&&Math.abs(rec.total)>=5000?'Retour de '+money(Math.abs(rec.total)):(r>=.5&&rec.disc>0)?'Remise de '+Math.round(r*100)+' %':(Math.abs(rec.total)>=50000?'Ticket de '+money(rec.total):'');
+      if(why&&!demo){const aid='w'+Date.now().toString(36);if(farceSeen)farceSeen.add(aid);Store.set('farces',aid,{id:aid,kind:'alerte',text:why+' · ticket N° '+pad6(n),by:who()||'Caisse',ts:Date.now()}).catch(()=>{})}}catch(e){}
     await after(rec);
   }catch(e){toast('Enregistrement impossible : '+(e&&e.message?e.message:'réessayez.'))}
   finally{ui.busy=false}
@@ -1660,7 +1757,7 @@ const A={
   farceKnock(){ui.fk=(ui.fk||0)+1;clearTimeout(ui.fkt);ui.fkt=setTimeout(()=>{ui.fk=0},2500);if(ui.fk>=7){ui.fk=0;ui.drawer=false;ui.farceOk=false;ui.sheet='farce';renderApp();renderSheet()}},
   fTab(el){ui.fTab=el.dataset.v;renderSheet()},
   f007Open(el){const box=el.parentNode;if(box.querySelector('input'))return;box.innerHTML=`<input class="f007i" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off" aria-label="Code patron"><button class="f007b" data-a="f007Ok">OK</button>`;const i=box.querySelector('input');i.focus();i.addEventListener('keydown',e=>{if(e.key==='Enter')A.f007Ok(box.querySelector('[data-a=f007Ok]'))})},
-  f007Ok(el){const i=el.parentNode.querySelector('input');if(i&&i.value===FSECRET){const id='s'+Date.now().toString(36);if(farceSeen)farceSeen.add(id);Store.set('farces',id,{id,kind:'stop',by:'Agent X',ts:Date.now()}).catch(()=>{});farceOff();if(hlock)hardUnlock();const r=document.getElementById('hlRoot');if(r)r.innerHTML=''}else{el.parentNode.innerHTML='<button class="f007b" data-a="f007Open">0007</button>'}},
+  f007Ok(el){const i=el.parentNode.querySelector('input');if(i&&i.value===fCode()){const id='s'+Date.now().toString(36);if(farceSeen)farceSeen.add(id);Store.set('farces',id,{id,kind:'stop',by:'Agent X',ts:Date.now()}).catch(()=>{});farceOff();if(hlock)hardUnlock();const r=document.getElementById('hlRoot');if(r)r.innerHTML=''}else{el.parentNode.innerHTML='<button class="f007b" data-a="f007Open">0007</button>'}},
   annClose(){const r=document.getElementById('annRoot');if(r)r.innerHTML=''},
   annSend(){const t=($('#anText')||{}).value.trim();if(!t)return;const id='a'+Date.now().toString(36);if(farceSeen)farceSeen.add(id);Store.set('farces',id,{id,kind:'annonce',text:t,by:who()||'Agent X',ts:Date.now()}).catch(()=>{});$('#anText').value='';toast('Annonce envoyée')},
   lockAll(){const id='l'+Date.now().toString(36);if(farceSeen)farceSeen.add(id);Store.set('farces',id,{id,kind:'lockall',by:'Agent X',ts:Date.now()}).catch(()=>{});toast('Caisses verrouillées')},
@@ -1711,9 +1808,9 @@ const A={
   async gReset(){delete FG._gate;if(farceSeen)farceSeen.add('_gate');await Store.del('farces','_gate').catch(()=>{});try{sessionStorage.setItem('caisse-gate',GATE_DEF+'|'+(Date.now()+12*36e5));localStorage.removeItem('caisse-gate')}catch(x){}toast('Code d\'origine rétabli')},
   fFav(el){const v=el.dataset.v;let a=favList();a=a.includes(v)?a.filter(x=>x!==v):[v].concat(a);try{localStorage.setItem('caisse-ffav',JSON.stringify(a))}catch(e){}const g=document.querySelector('.fgrid');if(g)g.innerHTML=farceGridHtml()},
   farceRand(){const l=FARCES.filter(f=>f[0].indexOf('a_')!==0);const f=l[Math.floor(Math.random()*l.length)];A.farceSend({dataset:{v:f[0]}});toast('Surprise : '+f[1])},
-  logClear(){Object.values(FG).filter(f=>f.id&&f.kind&&f.kind!=='maint'&&f.kind!=='sched').forEach(f=>{delete FG[f.id];Store.del('farces',f.id).catch(()=>{})});renderSheet()},
+  logClear(){Object.values(FG).filter(f=>f.id&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence').forEach(f=>{delete FG[f.id];Store.del('farces',f.id).catch(()=>{})});renderSheet()},
   farceLogin(){const v=($('#fCode')||{}).value,e=$('#fErr');if(Date.now()<(ui.f0u||0)){if(e)e.textContent='Patientez '+Math.ceil((ui.f0u-Date.now())/1000)+' s.';return}
-    if(v===FSECRET){ui.f0=0;ui.farceOk=true;renderSheet()}else{ui.f0=(ui.f0||0)+1;if(ui.f0>=3){ui.f0=0;ui.f0u=Date.now()+30000}if(e)e.textContent=ui.f0u>Date.now()?'Trop d\'essais. Patientez 30 s.':'Code incorrect.'}},
+    if(v===fCode()){ui.f0=0;ui.farceOk=true;renderSheet()}else{ui.f0=(ui.f0||0)+1;if(ui.f0>=3){ui.f0=0;ui.f0u=Date.now()+30000}if(e)e.textContent=ui.f0u>Date.now()?'Trop d\'essais. Patientez 30 s.':'Code incorrect.'}},
   farceStop(){farceOff();const id='s'+Date.now().toString(36);if(farceSeen)farceSeen.add(id);Store.set('farces',id,{id,kind:'stop',by:'Agent X',ts:Date.now()}).catch(()=>{});toast('Arrêt d\'urgence envoyé')},
   farcePrev(el){ui.fpv=true;const r=document.getElementById('farceRoot');farcePlay(el.dataset.v,'Agent X')},
   farceSend(el){const id='f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);const by='Agent X';if(farceSeen)farceSeen.add(id);farcePlay(el.dataset.v,by);Store.set('farces',id,{id,kind:el.dataset.v,by,ts:Date.now()}).catch(()=>{});
@@ -2078,6 +2175,42 @@ const A={
     const d=ui.rest;if(!d||ui.busy)return;ui.busy=true;renderSheet();let n=0;
     try{for(const [col,key] of [['products','products'],['customers','customers'],['vouchers','vouchers']]){for(const [id,v] of Object.entries(d[key]||{})){if(!v||typeof v!=='object')continue;await Store.set(col,id,v);S[key][id]=v;n++}}}catch(e){toast('Restauration interrompue : '+(e&&e.message||'erreur'))}
     ui.busy=false;ui.rest=null;ui.sheet=null;renderApp();renderSheet();toast(n+' élément'+(n>1?'s':'')+' restauré'+(n>1?'s':''))
+  },
+  ctSend(id,o){const k='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);if(farceSeen)farceSeen.add(k);Store.set('farces',k,Object.assign({id:k,to:id,by:'Agent X',ts:Date.now()},o)).catch(()=>toast('Envoi impossible'))},
+  fxAct(el){const v=el.dataset.v,r=document.getElementById('farceRoot');
+    if(v==='tap'){window.fxN=(window.fxN||5)-1;const n=document.getElementById('fxn');if(window.fxN<=0){if(n)n.textContent='DÉSAMORCÉ ✔';setTimeout(farceOff,1200)}else if(n)n.textContent='ENCORE '+window.fxN+' FOIS';return}
+    if(v==='ans'){const f=r&&r.querySelector('.fx');if(f)f.innerHTML='<b>Allô ?</b><span>…Il a raccroché.</span>';setTimeout(farceOff,2000);return}
+    farceOff()},
+  jBy(el){ui.jb=el.dataset.v||'';renderSheet()},
+  fHide(el){const a=fhid();if(!a.includes(el.dataset.v))a.push(el.dataset.v);try{localStorage.setItem('caisse-fhide',JSON.stringify(a))}catch(e){}renderSheet()},
+  fUnhide(){try{localStorage.removeItem('caisse-fhide')}catch(e){}renderSheet()},
+  jFilt(el){ui.jf=el.dataset.v||'';renderSheet()},
+  async jCsv(){const rows=[['date','type','par','caisse_ciblee']];Object.values(FG).filter(f=>f.ts&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence').sort((a,b)=>b.ts-a.ts).forEach(f=>rows.push([new Date(f.ts).toISOString(),f.kind,f.by||'',f.to||'']));await saveFile('journal-007.csv',csv(rows))},
+  surprise(){ui.sur=!ui.sur;clearTimeout(ui.surT);const go=()=>{if(!ui.sur)return;const l=FARCES.filter(x=>!fhid().includes(x[0]));if(!l.length)return;const f=l[Math.floor(Math.random()*l.length)];const id='r'+Date.now().toString(36);if(farceSeen)farceSeen.add(id);Store.set('farces',id,{id,kind:f[0],by:'Mode surprise',ts:Date.now()}).catch(()=>{});ui.surT=setTimeout(go,(5+Math.random()*15)*60000)};if(ui.sur)ui.surT=setTimeout(go,(5+Math.random()*15)*60000);toast(ui.sur?'Mode surprise activé':'Mode surprise coupé');renderSheet()},
+  async codeSet(){const v=(($('#newCode')||{}).value||'').trim();if(!/^\d{4}$/.test(v))return toast('Le code doit faire 4 chiffres.');FG._fcode={id:'_fcode',kind:'maint',code:v,ts:Date.now()};if(farceSeen)farceSeen.add('_fcode');try{await Store.set('farces','_fcode',FG._fcode);toast('Code 007 modifié')}catch(e){toast('Enregistrement impossible')}},
+  ctReload(el){A.ctSend(el.dataset.id,{kind:'reload'});toast('Rechargement envoyé')},
+  ctBeep(el){A.ctSend(el.dataset.id,{kind:'beep'});toast('Son envoyé')},
+  ctTheme(el){A.ctSend(el.dataset.id,{kind:'theme'});toast('Thème inversé (1 min)')},
+  ctBlock(el){A.ctSend(el.dataset.id,{kind:'blocktab',tab:($('#ctBlk')||{}).value||'tickets'});toast('Onglet bloqué (3 min)')},
+  sabSend(el){A.ctSend(($('#sabTo')||{}).value||undefined,{kind:'sab',modes:[el.dataset.v],ms:180000});toast('Sabotage lancé (3 min)')},
+  ctMsg(el){const t=(($('#ctText')||{}).value||'').trim();if(!t)return toast('Écrivez un message.');A.ctSend(el.dataset.id,{kind:'annonce',text:t});$('#ctText').value='';toast('Message envoyé à cette caisse')},
+  ctLock(el){A.ctSend(el.dataset.id,{kind:'lockall'});toast('Caisse verrouillée (le code s\'affiche sur son écran)')},
+  ctKick(el){A.ctSend(el.dataset.id,{kind:'kick'});toast('Déconnexion envoyée')},
+  openPurge(){if(!isAdmin())return;ui.busy=false;ui.sheet='purge';renderSheet()},
+  async doPurge(){
+    if(!isAdmin()||ui.busy)return;
+    const v=($('#purgeConf')&&$('#purgeConf').value||'').trim().toUpperCase();
+    if(v!=='SUPPRIMER')return setHint('#purgeErr','Tapez exactement SUPPRIMER pour confirmer.');
+    const ids=Object.keys(S.products);if(!ids.length)return;
+    ui.busy=true;renderSheet();let n=0,fail=0;
+    for(let i=0;i<ids.length;i+=20){
+      const chunk=ids.slice(i,i+20);
+      const res=await Promise.allSettled(chunk.map(id=>Store.del('products',id)));
+      res.forEach((r,j)=>{if(r.status==='fulfilled'){delete S.products[chunk[j]];n++}else fail++});
+    }
+    ui.cart=(ui.cart||[]).filter(x=>x.free);ui.cb={};
+    ui.busy=false;ui.sheet=null;ui.editing=null;renderApp();renderSheet();
+    toast(fail?n+' article'+(n>1?'s':'')+' supprimé'+(n>1?'s':'')+', '+fail+' en échec (réessayez)':n+' article'+(n>1?'s':'')+' supprimé'+(n>1?'s':''))
   },
   async backup(){
     const data={exportedAt:new Date().toISOString(),shop:S.cfg,products:S.products,sales:S.sales,closures:S.closures,counter:S.counter,customers:S.customers,vouchers:S.vouchers,moves:S.moves,staff:staffList().map(s=>({name:s.name,role:s.role}))};
@@ -2466,7 +2599,7 @@ Object.assign(A,{
     try{const h=await recHash(u.id,code);await Store.update('staff',u.id,{rec:h});S.staff[u.id].rec=h;u.rec=h;ui.recovery=code;renderApp()}catch(e){toast('Enregistrement impossible.')}
   },
   async doForgot(){
-    if(($('#fgCode')||{}).value.trim()===FSECRET){ui.farceOk=true;ui.sheet='farce';renderSheet();return}
+    if(($('#fgCode')||{}).value.trim()===fCode()){ui.farceOk=true;ui.sheet='farce';renderSheet();return}
     const code=$('#fgCode').value,p1=$('#fgPin').value.trim(),p2=$('#fgPin2').value.trim();
     if(recNorm(code).length<16)return setHint('#fgErr','Saisissez le code de secours complet.');
     if(!/^\d{4}$/.test(p1))return setHint('#fgErr','Le code PIN comporte 4 chiffres.');
@@ -2707,6 +2840,7 @@ function initStandalone(){
     const mergeD=(base,d)=>{const o=J(base||{});Object.keys(d).forEach(k=>{const ps=k.split('.');let t=o;for(let i=0;i<ps.length-1;i++){t=t[ps[i]]=(t[ps[i]]&&typeof t[ps[i]]==='object')?t[ps[i]]:{}}t[ps[ps.length-1]]=J({v:d[k]}).v});return o};
     const put=async(c,id,data)=>{const r=await sb.from('docs').upsert({col:c,id,data,updated_at:new Date().toISOString()});if(r.error)throw r.error;(cache[c]=cache[c]||{})[id]=data;notify(c)};
     db={
+      ping:async()=>{const r=await sb.from('docs').select('id').limit(1);if(r.error)throw r.error},
       collection:c=>({onSnapshot:(next,err)=>{const s={next,err};(subs[c]=subs[c]||[]).push(s);watch(c);load(c).catch(e=>{if(err)err(e)});return()=>{subs[c]=(subs[c]||[]).filter(x=>x!==s)}}}),
       doc:p=>{const i=p.indexOf('/'),c=p.slice(0,i),id=p.slice(i+1);return{
         set:d=>put(c,id,J(d)),
@@ -2715,6 +2849,13 @@ function initStandalone(){
         acquire:async o=>{const r=await sb.rpc('acquire_lease',{p_col:c,p_id:id,p_holder:o.holder,p_ttl_ms:o.ttlMs});if(r.error)throw r.error;return{acquired:!!r.data}}}}
     };
   }catch(e){db=null}
+}
+async function loadSb(){
+  if(window.supabase)return true;
+  for(const u of ['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js','https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js']){
+    try{await new Promise((ok,ko)=>{const t=document.createElement('script');t.src=u;t.onload=ok;t.onerror=ko;document.head.appendChild(t);setTimeout(ko,8000)});if(window.supabase)return true}catch(e){}
+  }
+  return false;
 }
 async function start(){
   if(window.claude)document.documentElement.classList.add('hosted');
@@ -2726,8 +2867,17 @@ async function start(){
       downloads=await window.claude.use('downloads');
     }
   }catch(e){db=null}
-  if(!window.claude)initStandalone();
+  let dbErr='';
+  if(!window.claude){
+    if(!(await loadSb()))dbErr='bibliothèque Supabase introuvable (pas de connexion internet ?)';
+    else{
+      initStandalone();
+      if(db&&db.ping){try{await Promise.race([db.ping(),new Promise((_,ko)=>setTimeout(()=>ko(new Error('délai dépassé')),8000))])}catch(e){db=null;dbErr=(e&&e.message)||'erreur inconnue'}}
+      else dbErr='configuration Supabase invalide';
+    }
+  }
   if(!db)lload();applyLook();
+  if(dbErr)showBanner('Base de données','Connexion impossible : mode local temporaire','Raison : '+dbErr+'. Les données de cette session restent dans ce navigateur et ne sont pas envoyées à Supabase. Vérifiez internet puis rechargez la page.');
   startSubs();
   const iv=setInterval(()=>{if(allReady()){clearTimeout(slow);clearInterval(iv)}},500);
 }
