@@ -325,9 +325,9 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--accent);bac
 
 /* ===== Tunder shell (v8) ===== */
 html,body{background:var(--bg)}
-.tb{display:flex;align-items:stretch;background:#fff;border-bottom:1px solid var(--line);margin:0 -20px;padding:0 4px 0 0;position:sticky;top:0;z-index:5}
+.tb{display:flex;align-items:stretch;background:#fff;border-bottom:1px solid var(--line);margin:0 -20px;padding:0 4px 0 0;position:sticky;top:0;z-index:6}
 .tbm{flex:none;width:52px;display:grid;place-items:center;color:var(--fg)}
-.tbt{display:flex;overflow-x:auto;scrollbar-width:none;flex:1;gap:4px}.tbt::-webkit-scrollbar{display:none}
+.tbt{display:flex;overflow-x:auto;scrollbar-width:none;flex:1;gap:4px;-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 22px),transparent 100%);mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 22px),transparent 100%)}.tbt::-webkit-scrollbar{display:none}
 .tbt button{flex:none;padding:17px 12px 14px;font-size:16px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;border-radius:0;background:none}
 .tbt button[aria-pressed="true"]{color:var(--accent-base);border-bottom-color:var(--accent-base)}
 .dov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30}
@@ -351,7 +351,7 @@ html,body{background:var(--bg)}
 .tile .nm{font-size:13px;font-weight:600;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tile .pr{font-size:13px;font-weight:700;color:var(--accent-base)}.tile .st{font-size:10.5px}
 .tile .qtyw{top:4px;right:4px}
-.tbar{display:flex;justify-content:space-between;align-items:center;width:calc(100% + 40px);margin:0 -20px;padding:20px 22px calc(20px + env(safe-area-inset-bottom,0px));background:var(--accent-base);color:#fff;font-size:17px;font-weight:600;border-radius:0}
+.tbar{display:flex;justify-content:space-between;align-items:center;width:calc(100% + 40px);margin:0 -20px;padding:20px 22px calc(20px + env(safe-area-inset-bottom,0px));background:var(--accent-base);color:#fff;font-size:17px;font-weight:600;border-radius:0;position:relative;z-index:6}
 .tbar i{font-style:normal;background:#ffffff2a;border-radius:10px;padding:1px 9px;margin-left:8px;font-size:14px}
 .tbar b{font-size:17px}.tbar.off{background:#055548;opacity:.55}
 .seg{background:transparent;padding:0;gap:8px}.seg button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 6px;font-size:14px}.seg button[aria-pressed="true"]{background:var(--accent-base);color:#fff;border-color:var(--accent-base);box-shadow:none}
@@ -876,6 +876,32 @@ function sabSync(){const d=document.documentElement;d.classList.toggle('sab-wob'
 function sabClear(){SAB.m={};SAB.until=0;clearTimeout(SAB.t);sabSync();renderApp()}
 setInterval(()=>{if(sabOn('theme'))document.documentElement.classList.toggle('sab-inv');else sabSync()},3000);
 function beep(){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator();o.connect(ac.destination);o.frequency.value=660;o.start();o.stop(ac.currentTime+.4)}catch(e){}}
+function scanBeep(ok){try{const ac=new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type='square';g.gain.value=.16;
+  if(ok){o.frequency.value=1900;o.start();g.gain.setTargetAtTime(0,ac.currentTime+.08,.02);o.stop(ac.currentTime+.13)}
+  else{o.frequency.value=220;o.start();g.gain.setTargetAtTime(0,ac.currentTime+.18,.03);o.stop(ac.currentTime+.24)}
+}catch(e){}}
+function loyaltyCode(c){const s=String((c&&c.id)||'');let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return '29'+String(h).padStart(11,'0').slice(-11)}
+var BC_URLS=['https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js','https://unpkg.com/jsbarcode@3.11.6/dist/JsBarcode.all.min.js','https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js'];
+var loadBCp=null;
+function loadBarcode(){
+  if(window.JsBarcode)return Promise.resolve();
+  if(loadBCp)return loadBCp;
+  loadBCp=(async function(){
+    for(let i=0;i<BC_URLS.length;i++){
+      try{await new Promise((ok,ko)=>{const s=document.createElement('script');s.src=BC_URLS[i];s.async=true;const t=setTimeout(()=>{s.remove();ko(new Error('délai'))},9000);s.onload=()=>{clearTimeout(t);ok()};s.onerror=()=>{clearTimeout(t);s.remove();ko(new Error('erreur'))};document.head.appendChild(s)});
+        if(window.JsBarcode)return;
+      }catch(e){}
+    }
+    loadBCp=null;throw new Error('Module code-barres introuvable (vérifiez internet)');
+  })();
+  return loadBCp;
+}
+function barcodeSvg(value,opts){
+  try{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    window.JsBarcode(svg,String(value),Object.assign({format:'CODE128',displayValue:true,margin:6,height:60,font:'monospace'},opts||{}));
+    return svg.outerHTML;
+  }catch(e){return ''}
+}
 setInterval(()=>{if(sabOn('shuffle')){SAB.seed=Math.floor(Math.random()*1e6);if(ui.tab==='sale'&&!ui.sheet&&ui.area!=='customer')renderGrid()}},15000);
 const kpiHtml=(a,t)=>`<div class="kpis">${a.map(x=>`<button class="kpi" data-a="fTab" data-v="${t}"><b>${x[0]}</b><span>${x[1]}</span></button>`).join('')}</div>`;
 const fhid=()=>{try{return JSON.parse(localStorage.getItem('caisse-fhide')||'[]')}catch(e){return[]}};
@@ -1258,12 +1284,23 @@ function sheetScan(){
     <button class="btn" data-a="scanManual">Ajouter</button><button class="btn ghost" data-a="scanClose">Terminer</button>`;
 }
 function scanFound(code){
-  const p=activeProds().find(x=>x.sku&&x.sku===String(code).trim());
+  const raw=String(code).trim();
+  const p=activeProds().find(x=>x.sku&&x.sku===raw);
   const m=document.getElementById('scanMsg');
-  if(!p){ui.scanMsg='Code '+code+' : aucun article.';if(m)m.textContent=ui.scanMsg;toast('Code inconnu : '+code);return false}
-  if(p.weighed){scanStop();ui.weigh=p.id;ui.sheet='weight';renderSheet();return true}
-  A.add({dataset:{id:p.id}});ui.scanMsg=p.name+' ajouté.';if(m)m.textContent=ui.scanMsg;
-  try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}return true;
+  if(p){
+    scanBeep(true);try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}
+    if(p.weighed){scanStop();ui.weigh=p.id;ui.sheet='weight';renderSheet();return true}
+    A.add({dataset:{id:p.id}});ui.scanMsg=p.name+' ajouté.';if(m)m.textContent=ui.scanMsg;
+    return true;
+  }
+  const cl=custList().find(c=>loyaltyCode(c)===raw);
+  if(cl){
+    scanBeep(true);try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}
+    scanStop();ui.clientEdit=cl.id;ui.clientFrom='scan';ui.sheet='client';renderSheet();
+    toast('Carte de fidélité : '+cl.name);return true;
+  }
+  scanBeep(false);
+  ui.scanMsg='Code '+raw+' : aucun article ni client.';if(m)m.textContent=ui.scanMsg;toast('Code inconnu : '+raw);return false;
 }
 async function scanStart(){
   scanStop();const v=document.getElementById('scanV');if(!v||!window.BarcodeDetector)return;
@@ -1410,7 +1447,7 @@ function productsHtml(){
   const all=prodList();const act=all.filter(p=>p.active!==false),arch=all.filter(p=>p.active===false);
   const low=act.filter(p=>typeof p.stock==='number'&&!p.weighed&&p.stock<=alertOf(p));
   let h=`<button class="fab" data-a="newProduct" aria-label="Ajouter un produit">${ic('plus',28)}</button>
-    <div class="bar"><button class="btn ghost" data-a="openImport">Importer (CSV)</button><button class="btn ghost" data-a="exportCatalog"${downloads?'':' disabled'}>Exporter</button></div>`;
+    <div class="bar"><button class="btn ghost" data-a="openImport">Importer (CSV)</button><button class="btn ghost" data-a="exportCatalog"${downloads?'':' disabled'}>Exporter</button><button class="btn ghost" data-a="openBarcodes">Codes-barres</button></div>`;
   if(low.length)h+=`<div class="notice"><b>Stock bas :</b> ${low.map(p=>esc(p.name)+' ('+p.stock+')').join(', ')}</div>`;
   if(!all.length)return h+`<div class="empty">Aucun produit. Ajoutez le premier pour pouvoir encaisser.</div>`;
   const marge=p=>{if(typeof p.buy!=='number')return '';const ht=p.price/(1+effRate(p)/100);return ht>0?' · marge '+Math.round((ht-p.buy)/ht*100)+' %':''};
@@ -1693,6 +1730,7 @@ function sheetProduct(){
     ${fields}
     <h4 class="fsec">Code-barres et gestion de stock</h4><div class="two"><div class="field"><label class="lbl" for="pSku">Code-barres ou référence</label><input id="pSku" autocomplete="off" value="${p?esc(p.sku||''):''}"></div>
     <div class="field"><label class="lbl" for="pStock">Stock actuel (vide = non suivi)</label><input id="pStock" inputmode="numeric" autocomplete="off" value="${p&&typeof p.stock==='number'?p.stock:''}"></div></div>
+    ${p&&p.sku?`<button class="btn ghost small" data-a="dlProductBarcode" data-id="${esc(p.id)}"${downloads?'':' disabled'}>Télécharger le code-barres</button>`:''}
     <div class="two"><div class="field"><label class="lbl" for="pRecv">Réception : quantité reçue</label><input id="pRecv" inputmode="numeric" autocomplete="off" placeholder="0"></div>
     <div class="field"><label class="lbl" for="pAlert">Alerte de stock à</label><input id="pAlert" inputmode="numeric" autocomplete="off" value="${p&&typeof p.alert==='number'?p.alert:3}"></div></div>
     <label class="chk"><input type="checkbox" id="pWeighed" ${p&&p.weighed?'checked':''}> <span>Vendu au poids</span></label>
@@ -1701,6 +1739,23 @@ function sheetProduct(){
     ${ui.editing?`<button class="btn ghost" data-a="dupProduct">Créer une variante (taille, couleur…)</button>`:''}
     ${ui.editing&&p?(p.active===false?`<button class="btn ghost" data-a="reactivate">Remettre au catalogue</button>`:`<button class="btn ghost" data-a="archive">Retirer du catalogue</button>`):''}
     </div><div class="ff"><div class="pay2"><button class="pg" data-a="saveProduct">Enregistrer</button></div></div>`;
+}
+function sheetBarcodes(){
+  const list=activeProds().filter(p=>p.sku);
+  return`${sh('Codes-barres des articles')}<p class="sub">${list.length} article${list.length>1?'s':''} avec un code-barres renseigné.</p>
+  <div class="bar"><button class="btn ghost small" data-a="printBarcodes"${list.length?'':' disabled'}>Imprimer</button><button class="btn ghost small" data-a="dlBarcodes"${downloads&&list.length?'':' disabled'}>Télécharger (HTML)</button></div>
+  <div id="bcGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${list.length?list.map(p=>`<div class="panel bcCell" data-id="${esc(p.id)}" style="text-align:center"><b style="display:block;font-size:13px;margin-bottom:4px">${esc(p.name)}</b><div class="bcSvg" style="background:#fff;border-radius:8px;min-height:70px;display:flex;align-items:center;justify-content:center;color:#111"><span class="sub">Génération…</span></div></div>`).join(''):`<div class="empty">Aucun article avec un code-barres. Renseignez un code-barres dans la fiche d'un article.</div>`}</div>
+  <button class="btn ghost" data-a="close">Fermer</button>`;
+}
+function renderBarcodesGrid(){
+  loadBarcode().then(()=>{
+    if(ui.sheet!=='barcodes')return;
+    document.querySelectorAll('#bcGrid .bcCell').forEach(cell=>{
+      const id=cell.dataset.id,p=S.products[id];if(!p)return;
+      const box=cell.querySelector('.bcSvg');if(!box)return;
+      box.innerHTML=barcodeSvg(p.sku,{height:55,width:1.8,fontSize:12})||'<span class="sub">Code invalide.</span>';
+    });
+  }).catch(e=>{const g=document.getElementById('bcGrid');if(g)g.innerHTML=`<div class="empty">${esc(e.message)}</div>`});
 }
 function sheetPurge(){
   const n=Object.keys(S.products).length;
@@ -1741,10 +1796,10 @@ function renderSheet(){
   const root=$('#sheetRoot');
   if(!ui.sheet){root.innerHTML='';lastSheet=null;return}
   const old=root.querySelector('.sheet');const top=old&&lastSheet===ui.sheet?old.scrollTop:0;
-  const map={cart:sheetCart,discount:sheetDiscount,pay:sheetPay,done:sheetDone,ticket:sheetTicket,z:sheetZ,refund:sheetRefund,product:sheetProduct,holdSave:sheetHoldSave,holds:sheetHolds,weight:sheetWeight,imp:sheetImport,staff:sheetStaff,move:sheetMove,free:sheetFree,scan:sheetScan,pickclient:sheetPickClient,client:sheetClient,starter:sheetStarter,cbasket:sheetCBasket,orders:sheetOrders,farce:sheetFarce,cartopt:sheetCartOpt,gift:sheetGift,tip:sheetTip,restore:sheetRestore,purge:sheetPurge};
+  const map={cart:sheetCart,discount:sheetDiscount,pay:sheetPay,done:sheetDone,ticket:sheetTicket,z:sheetZ,refund:sheetRefund,product:sheetProduct,holdSave:sheetHoldSave,holds:sheetHolds,weight:sheetWeight,imp:sheetImport,staff:sheetStaff,move:sheetMove,free:sheetFree,scan:sheetScan,pickclient:sheetPickClient,client:sheetClient,starter:sheetStarter,cbasket:sheetCBasket,orders:sheetOrders,farce:sheetFarce,cartopt:sheetCartOpt,gift:sheetGift,tip:sheetTip,restore:sheetRestore,purge:sheetPurge,barcodes:sheetBarcodes};
   root.innerHTML=`<div class="backdrop" data-a="backdrop"><div class="sheet${lastSheet!==ui.sheet?' anim':''}${ui.sheet==='cart'||ui.sheet==='pay'||ui.sheet==='product'||ui.sheet==='gift'||ui.sheet==='tip'?' full':ui.sheet==='cartopt'?' opt':''}" role="dialog" aria-modal="true">${map[ui.sheet]()}</div></div>`;
   const sheet=root.querySelector('.sheet');if(top)sheet.scrollTop=top;
-  lastSheet=ui.sheet;if(ui.sheet==='pay')updatePayHint();if(ui.sheet==='scan')scanStart();
+  lastSheet=ui.sheet;if(ui.sheet==='pay')updatePayHint();if(ui.sheet==='scan')scanStart();if(ui.sheet==='barcodes')renderBarcodesGrid();
 }
 function refreshSale(){if(ui.cart.length){const c=$('.coach');if(c)c.remove()}renderBar();renderSheet();if(ui.tab==='sale')renderGrid()}
 function updatePayHint(){
@@ -1843,8 +1898,9 @@ function sheetClient(){
     <div class="field"><label class="lbl" for="clNote">Note</label><textarea id="clNote">${c?esc(c.note||''):''}</textarea></div>
     <label class="chk"><input type="checkbox" id="clConsent" ${c&&c.consent?'checked':''}> <span>Le client accepte l'enregistrement de ses coordonnées</span></label>
     ${c?`<div class="rows"><div class="row"><span class="muted">Points de fidélité</span><span class="num">${c.points||0}</span></div><div class="row"><span class="muted">Achats</span><span class="num">${c.visits||0} · ${money(c.spent||0)}</span></div>${hist.map(s=>`<button class="row" data-a="viewTicket" data-n="${s.n}" style="width:100%"><span>N° ${pad6(s.n)} · ${esc(dayShort(s.ts))}</span><span class="num">${money(s.total)}</span></button>`).join('')}</div>`:''}
-    <div class="hint err" id="clErr"></div><button class="btn" data-a="saveClient">Enregistrer</button>
-    ${c?'<button class="btn danger" data-a="delClient">Supprimer la fiche</button>':''}<button class="btn ghost" data-a="${ui.clientFrom==='cart'?'pickClient':'close'}">Retour</button>`;
+    ${c&&ui.clientFrom==='scan'?`<button class="btn" data-a="selClient" data-id="${esc(c.id)}">Sélectionner pour cette vente</button>`:''}
+    <div class="hint err" id="clErr"></div><button class="btn${ui.clientFrom==='scan'?' ghost':''}" data-a="saveClient">Enregistrer</button>
+    ${c?'<button class="btn danger" data-a="delClient">Supprimer la fiche</button>':''}<button class="btn ghost" data-a="${ui.clientFrom==='scan'?'backCart':ui.clientFrom==='cart'?'pickClient':'close'}">Retour</button>`;
 }
 function sheetGift(){
   return`<div class="fh"><button class="fx2" data-a="backCart" aria-label="Retour">${ic('x',24)}</button><b>Carte cadeau</b><span style="width:44px"></span></div><div class="fm"><p class="sub">Un code est créé à l'encaissement. Il s'utilise ensuite comme moyen de paiement « Bon d'achat ».</p>
@@ -2138,6 +2194,26 @@ const A={
   async archive(){const p=S.products[ui.editing];if(!p)return;ui.cart=ui.cart.filter(x=>x.id!==p.id);p.active=false;await Store.update('products',p.id,{active:false});ui.sheet=null;ui.editing=null;renderApp();renderSheet()},
   async reactivate(){const p=S.products[ui.editing];if(!p)return;p.active=true;await Store.update('products',p.id,{active:true});ui.sheet=null;ui.editing=null;renderApp();renderSheet()},
   openImport(){ui.imp='';ui.sheet='imp';renderSheet()},
+  openBarcodes(){ui.sheet='barcodes';renderSheet()},
+  printBarcodes(){
+    const grid=document.getElementById('bcGrid');if(!grid)return;
+    const w=window.open('','_blank');if(!w)return toast('Fenêtre bloquée : autorisez les pop-ups pour imprimer.');
+    const css=(document.querySelector('style')||{}).textContent||'';
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Codes-barres</title><style>'+css+'body{padding:16px;background:#fff}</style></head><body><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">'+grid.innerHTML+'</div><script>window.onload=function(){setTimeout(function(){window.print()},300)}<'+'/script></body></html>');
+    w.document.close();
+  },
+  async dlBarcodes(){
+    const grid=document.getElementById('bcGrid');if(!grid)return;
+    const css=(document.querySelector('style')||{}).textContent||'';
+    const html='<!doctype html><html><head><meta charset="utf-8"><title>Codes-barres '+esc(S.cfg.name||'')+'</title><style>'+css+'body{padding:16px;background:#fff}</style></head><body><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">'+grid.innerHTML+'</div></body></html>';
+    await saveFile('codes-barres.html',html);
+  },
+  async dlProductBarcode(el){
+    try{await loadBarcode()}catch(e){return toast(e.message)}
+    const p=S.products[el.dataset.id];if(!p||!p.sku)return toast('Renseignez un code-barres pour cet article.');
+    const svg=barcodeSvg(p.sku,{height:80,width:2.4,fontSize:16});if(!svg)return toast('Code-barres invalide.');
+    await saveFile('code-barre-'+String(p.sku).replace(/[^A-Za-z0-9_-]/g,'')+'.svg',svg);
+  },
   async doImport(){
     const text=$('#impText').value;ui.imp=text;const {out,errs}=parseImport(text);
     if(!out.length)return setHint('#impHint','Aucune ligne valide. Format : nom ; prix ; TVA ; catégorie ; code ; stock ; achat.');
@@ -2789,11 +2865,24 @@ const custEntry=()=>`<button class="cust-entry" data-a="goCustomer"><span class=
 const shopProds=()=>activeProds().filter(p=>!p.weighed&&!(typeof p.stock==='number'&&p.stock<=0));
 const basketLines=()=>Object.keys(ui.cb||{}).map(id=>{const p=S.products[id];return p&&ui.cb[id]>0?{id,name:p.name,price:p.price,vat:p.vat,qty:ui.cb[id]}:null}).filter(Boolean);
 const basketTotal=()=>basketLines().reduce((a,l)=>a+l.price*l.qty,0);
-function custHeader(){const h=custHeader0(),c=myCust();return h+(c?custTabs():'')}
+const CTN={shop:'Boutique',loyalty:'Fidélité',orders:'Mes commandes',account:'Mon profil'};
+function custHeader(){
+  if(!myCust())return custHeader0();
+  return`<header class="tb"><button class="tbm" data-a="drawer" aria-label="Menu">${ic('menu-2',26)}</button><nav class="tbt" aria-label="${esc(CTN[ui.cs]||'')}"><span class="tbh">${esc(CTN[ui.cs]||S.cfg.name)}</span></nav></header>`;
+}
 function custHeader0(){
-  const c=myCust();
-  return`<header class="head"><div class="brand">${brandMark()}<div style="min-width:0"><h1>${esc(S.cfg.name)}</h1><div class="date">${c?'Bonjour '+esc(c.name.split(' ')[0]):'Commande en ligne'}</div></div></div>
-  <div class="hr">${c?`<button class="iconbtn" data-a="cView" data-v="${ui.cs==='orders'?'shop':'orders'}" aria-label="${ui.cs==='orders'?'Boutique':'Mes commandes'}">${ic(ui.cs==='orders'?'shopping-bag':'receipt',20)}</button><button class="iconbtn" data-a="cView" data-v="${ui.cs==='account'?'shop':'account'}" aria-label="Mon profil">${ic(ui.cs==='account'?'shopping-bag':'user',20)}${ui.cs!=='account'&&nUnseen()?`<span class="nb">${nUnseen()}</span>`:''}</button><button class="iconbtn" data-a="cLogout" aria-label="Se déconnecter">${ic('logout',20)}</button>`:`<button class="iconbtn" data-a="cBack" aria-label="Retour">${ic('arrow-left',20)}</button>`}</div></header>`;
+  return`<header class="head"><div class="brand">${brandMark()}<div style="min-width:0"><h1>${esc(S.cfg.name)}</h1><div class="date">Commande en ligne</div></div></div>
+  <div class="hr"><button class="iconbtn" data-a="cBack" aria-label="Retour">${ic('arrow-left',20)}</button></div></header>`;
+}
+function custDrawer(c){
+  if(!c)return'';
+  const nOrd=orderList().filter(o=>o.clientId===c.id&&(o.status==='new'||o.status==='prep'||o.status==='ready')).length;
+  const nUn=nUnseen();
+  const order=[['shop','shopping-bag'],['loyalty','coin'],['orders','receipt'],['account','user']];
+  return`<div class="dov" data-a="drawer"></div><aside class="drw" aria-label="Menu"><div class="dh"><span class="dav">${esc((c.name||'?').charAt(0).toUpperCase())}</span><div><b>${esc(c.name)}</b><span>Espace client</span></div></div>
+  <div class="dl">${order.map(x=>`<button data-a="cView" data-v="${x[0]}" class="${ui.cs===x[0]?'on':''}">${ic(x[1],22)}<span>${CTN[x[0]]}</span>${x[0]==='orders'&&nOrd?`<i class="dbd">${nOrd}</i>`:''}${x[0]==='account'&&nUn?`<i class="dbd">${nUn}</i>`:''}</button>`).join('')}
+  <button data-a="cLogout">${ic('logout',22)}<span>Se déconnecter</span></button></div>
+  <div class="dsh"><span class="dsm">${esc((S.cfg.name||'?').trim().charAt(0).toUpperCase())}</span><div><b>${esc(S.cfg.name)}</b><span>Boutique en ligne</span></div></div></aside>`;
 }
 function myNotifs(){const c=myCust();return Object.values(NT).filter(n=>n.to==='all'||(c&&n.to===c.id)).sort((a,b)=>b.ts-a.ts)}
 function nUnseen(){let t=0;try{t=+localStorage.getItem('caisse-nseen')||0}catch(e){}return myNotifs().filter(n=>n.ts>t).length}
@@ -2813,16 +2902,24 @@ function renderCustomer(app){
     const L2=cf('loyalty');const pts=c.points||0;const goal=L2&&L2.redeemPts?L2.redeemPts:100;const into=pts%goal;const hist=Object.values(S.sales).filter(x=>x.kind==='sale'&&x.clientId===c.id).sort((a,b)=>b.ts-a.ts).slice(0,8);
     app.innerHTML=`<div class="scroll">${custHeader()}<h1 class="obt" style="font-size:24px">Mon profil</h1>
      ${(()=>{const L=myNotifs().slice(0,8);try{localStorage.setItem('caisse-nseen',String(Date.now()))}catch(e){}return`<div class="panel"><h3>Notifications</h3>${L.length?L.map(n=>`<div class="paid"><div><div class="nm">${esc(n.title)}</div><div class="sub">${esc(n.text)}</div>${n.tk?`<pre class="receipt" style="margin-top:8px;font-size:11px">${esc(n.tk)}</pre>`:''}<div class="sub">${esc(dtf.format(new Date(n.ts)))}</div></div></div>`).join(''):'<p class="sub">Aucune notification pour le moment.</p>'}</div>`})()}
-     ${L2&&L2.on?`<div class="panel"><h3>Fidélité</h3><div class="row"><span>Mes points</span><span class="num big">${pts}</span></div><div class="pbar"><i style="width:${Math.min(100,Math.round(into/goal*100))}%"></i></div><p class="sub">${pts>=goal?'Vous pouvez utiliser vos points en caisse : '+money(Math.floor(pts/goal)*L2.redeemEur*100)+' de remise.':'Encore '+(goal-into)+' points avant votre prochaine remise.'}</p></div>`:''}
+     ${L2&&L2.on?`<button class="cact" data-a="cView" data-v="loyalty"><span class="sico">${ic('coin',22)}</span><span style="flex:1;text-align:left"><b>Ma carte de fidélité</b><br><span class="sub">${pts} point${pts>1?'s':''}</span></span>${ic('chevron-right',18)}</button>`:''}
      <div class="panel"><div class="row"><span>Visites</span><span class="num">${c.visits||0}</span></div><div class="row"><span>Total dépensé</span><span class="num">${money(c.spent||0)}</span></div></div>
      <div class="panel"><h3>Mes achats</h3>${hist.length?hist.map(x=>`<div class="paid"><div><div class="nm">${esc(dtf.format(new Date(x.ts)))}</div><div class="sub">${x.lines.filter(l=>!l.gift).slice(0,3).map(l=>l.qty+' × '+esc(l.name)).join(', ')}${x.lines.length>3?'…':''}</div></div><div class="amt">${money(x.total)}</div><button class="link" data-a="cAgain" data-n="${x.n}">Recommander</button><button class="link" data-a="cTicket" data-n="${x.n}">Ticket</button></div>${ui.ctk===x.n?`<pre class="receipt" style="font-size:11px;margin:0 0 8px">${esc(ticketText(x))}</pre>`:''}`).join(''):'<p class="sub">Vos achats en boutique apparaîtront ici quand vous donnerez votre numéro en caisse.</p>'}</div>
      <div class="panel"><h3>Mes informations</h3><div class="field"><label class="lbl" for="pfName">Nom</label><input id="pfName" value="${esc(c.name)}" autocomplete="name"></div><div class="field"><label class="lbl" for="pfMail">E-mail (facultatif)</label><input id="pfMail" type="email" value="${esc(c.email||'')}" autocomplete="email"></div>
      <div class="field"><label class="lbl" for="pfPin">Nouveau code (4 chiffres, facultatif)</label><input id="pfPin" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div><div class="hint" id="pfH"></div><button class="btn" data-a="cSaveProfile">Enregistrer</button></div>
-     <button class="btn ghost" data-a="cView" data-v="shop">Retour à la boutique</button></div>`;return;
+     <button class="btn ghost" data-a="cView" data-v="shop">Retour à la boutique</button></div>${ui.drawer?custDrawer(c):''}`;return;
+  }
+  if(ui.cs==='loyalty'){
+    const L2=cf('loyalty');const pts=c.points||0,goal=(L2&&L2.redeemPts)||100,into=pts%goal;
+    app.innerHTML=`<div class="scroll">${custHeader()}<h1 class="obt" style="font-size:24px">Ma carte de fidélité</h1>
+     <div class="panel" style="text-align:center"><div id="loyBc" style="background:#fff;border-radius:12px;padding:14px;display:flex;justify-content:center;align-items:center;min-height:90px;color:#111"><span class="sub">Génération du code…</span></div><p class="sub" style="margin-top:10px">Montrez ce code au caissier pour utiliser vos points.</p></div>
+     ${L2&&L2.on?`<div class="panel"><div class="row"><span>Mes points</span><span class="num big">${pts}</span></div><div class="pbar"><i style="width:${Math.min(100,Math.round(into/goal*100))}%"></i></div><p class="sub">${pts>=goal?'Vous pouvez utiliser vos points en caisse : '+money(Math.floor(pts/goal)*L2.redeemEur*100)+' de remise.':'Encore '+(goal-into)+' points avant votre prochaine remise.'}</p></div>`:`<div class="panel"><p class="sub">Le programme de fidélité n'est pas activé pour cette boutique.</p></div>`}
+     <button class="btn ghost" data-a="cView" data-v="shop">Retour à la boutique</button></div>${ui.drawer?custDrawer(c):''}`;
+    renderLoyaltyBarcode(c);return;
   }
   if(ui.cs==='orders'){
     const L=orderList().filter(o=>o.clientId===c.id);
-    app.innerHTML=`<div class="scroll">${custHeader()}<h1 class="obt" style="font-size:24px">Mes commandes</h1>${L.length?L.map(o=>`<div class="ocard"><div class="orow"><b>Commande ${esc(o.code)}</b><span class="ost ${o.status}">${ST_LBL[o.status]}</span></div>${trk(o)}<ul>${o.lines.map(l=>`<li>${l.qty} × ${esc(l.name)}</li>`).join('')}</ul><div class="orow"><span class="sub">${esc(dtf.format(new Date(o.ts)))}</span><b>${money(o.total)}</b></div><button class="btn ghost small" data-a="cAgainO" data-id="${esc(o.id)}">Recommander</button>${o.status==='new'?`<button class="btn ghost small" data-a="cCancel" data-id="${esc(o.id)}">Annuler la commande</button>`:''}</div>`).join(''):`<div class="empty">${illu('accueil','')}<b>Aucune commande</b><span>Vos commandes apparaîtront ici.</span></div>`}<button class="btn" data-a="cView" data-v="shop">Retour à la boutique</button></div>`;return;
+    app.innerHTML=`<div class="scroll">${custHeader()}<h1 class="obt" style="font-size:24px">Mes commandes</h1>${L.length?L.map(o=>`<div class="ocard"><div class="orow"><b>Commande ${esc(o.code)}</b><span class="ost ${o.status}">${ST_LBL[o.status]}</span></div>${trk(o)}<ul>${o.lines.map(l=>`<li>${l.qty} × ${esc(l.name)}</li>`).join('')}</ul><div class="orow"><span class="sub">${esc(dtf.format(new Date(o.ts)))}</span><b>${money(o.total)}</b></div><button class="btn ghost small" data-a="cAgainO" data-id="${esc(o.id)}">Recommander</button>${o.status==='new'?`<button class="btn ghost small" data-a="cCancel" data-id="${esc(o.id)}">Annuler la commande</button>`:''}</div>`).join(''):`<div class="empty">${illu('accueil','')}<b>Aucune commande</b><span>Vos commandes apparaîtront ici.</span></div>`}<button class="btn" data-a="cView" data-v="shop">Retour à la boutique</button></div>${ui.drawer?custDrawer(c):''}`;return;
   }
   const ps=shopProds();const cs=['Tout','♥ Favoris',...[...new Set(ps.map(p=>p.cat||'Divers'))].sort((a,b)=>a.localeCompare(b,'fr'))];
   if(!cs.includes(ui.ccat))ui.ccat='Tout';
@@ -2839,7 +2936,14 @@ function renderCustomer(app){
    <div class="field"><input id="cq" type="search" placeholder="Rechercher un produit…" value="${esc(ui.cq||'')}" autocomplete="off"></div>
    <div class="chips" role="group" aria-label="Catégories">${cs.map(k=>`<button class="chip" data-a="cCat" data-v="${esc(k)}" aria-pressed="${ui.ccat===k}">${k!=='Tout'&&k!=='♥ Favoris'?`<i class="cdot" style="background:${hueOf(k)}"></i>`:''}${esc(k)}</button>`).join('')}</div>
    ${list.length?`<div class="clist">${list.map(row).join('')}</div>`:`<div class="empty">${illu('accueil','')}<b>Aucun produit trouvé</b><span>Essayez une autre catégorie.</span></div>`}</div>
-   ${bn?`<div class="cbar"><button class="cview" data-a="cBasket"><span class="cn">${ic('shopping-cart',20)}<b>${bn}</b></span><span class="ct">${money(bt)}</span></button><button class="cgo" data-a="cBasket">Commander ${ic('arrow-right',20)}</button></div>`:''}`;
+   ${bn?`<div class="cbar"><button class="cview" data-a="cBasket"><span class="cn">${ic('shopping-cart',20)}<b>${bn}</b></span><span class="ct">${money(bt)}</span></button><button class="cgo" data-a="cBasket">Commander ${ic('arrow-right',20)}</button></div>`:''}${ui.drawer?custDrawer(c):''}`;
+}
+function renderLoyaltyBarcode(c){
+  const el=document.getElementById('loyBc');if(!el)return;
+  loadBarcode().then(()=>{
+    if(ui.cs!=='loyalty')return;const el2=document.getElementById('loyBc');if(!el2)return;
+    el2.innerHTML=barcodeSvg(loyaltyCode(c),{height:70,width:2.1,fontSize:14})||'<span class="sub">Code indisponible.</span>';
+  }).catch(e=>{const el2=document.getElementById('loyBc');if(el2)el2.innerHTML=`<span class="sub">${esc(e.message)}</span>`});
 }
 function sheetCBasket(){
   const L=basketLines();
@@ -2863,7 +2967,7 @@ Object.assign(A,{
   goCustomer(){ui.area='customer';ui.cs='login';try{const id=localStorage.getItem('caisse-cust');if(id&&custOk(S.customers[id]))ui.cust=id}catch(e){}if(ui.cust)ui.cs='shop';renderApp()},
   cBack(){ui.area=null;renderApp()},
   cSwitch(){ui.cs=ui.cs==='signup'?'login':'signup';renderApp()},
-  cView(el){ui.cs=el.dataset.v;renderApp()},
+  cView(el){ui.cs=el.dataset.v;ui.drawer=false;renderApp()},
   cCat(el){ui.ccat=el.dataset.v;renderApp()},
   cLogout(){ui.cust=null;ui.cb={};ui.cs='login';try{localStorage.removeItem('caisse-cust')}catch(e){}ui.sheet=null;renderApp();renderSheet()},
   async cLogin(){
