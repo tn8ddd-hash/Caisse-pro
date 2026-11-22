@@ -844,7 +844,7 @@ function farceInit(){
       else if(f.kind==='lockall'){if(!bossDev()&&ui.area!=='customer')hardLockStart()}
       else if(f.kind==='unlock'){if(hlock&&String(f.code)===hlock)hardUnlock()}
       else if(f.kind==='unlockall'){hardUnlock()}
-      else if(f.kind==='sched'||f.kind==='maint'||f.kind==='presence'||f.kind==='sharereq'){}
+      else if(f.kind==='sched'||f.kind==='maint'||f.kind==='presence'||f.kind==='watch'){}
       else if(f.kind==='sab'){if(!bossDev()&&ui.area!=='customer')sabStart(f.modes,f.ms)}
       else if(f.kind==='alerte'){if(bossDev()){showBanner('Alerte vente suspecte',f.by||'',f.text);try{navigator.vibrate([200,100,200])}catch(e){}}}
       else if(f.kind==='reload'){if(!bossDev()&&ui.area!=='customer')setTimeout(()=>location.reload(),600)}
@@ -885,7 +885,7 @@ function teamStats(){
   const L=staffList().map(st=>{const v=salesList().filter(x=>sameDay(x.ts,Date.now())&&x.kind!=='refund'&&x.by===st.name);return{n:st.name,r:st.role,t:v.length,ca:v.reduce((a,x)=>a+x.total,0),on:on.includes(st.name)}});
   return`${kpiHtml([[L.length,'Employés'],[L.filter(x=>x.on).length,'Connectés'],[L.reduce((a,x)=>a+x.t,0),'Tickets du jour']],'team')}${L.map(x=>`<div class="frow"><span><b>${esc(x.n)}</b> ${x.on?'🟢':'⚪'}<br><span class="lgt">${esc(x.r==='admin'?'Responsable':'Caissier')} · ${x.t} ticket${x.t>1?'s':''} · ${money(x.ca)}</span></span></div>`).join('')}`
 }
-function byChips(){const B=[...new Set(Object.values(FG).filter(f=>f.ts&&f.by&&f.kind!=='presence'&&f.kind!=='maint').map(f=>f.by))].slice(0,6);return`<div class="chips">${[''].concat(B).map(b=>`<button class="chip" data-a="jBy" data-v="${esc(b)}" aria-pressed="${(ui.jb||'')===b}">${b?esc(b):'Tous les auteurs'}</button>`).join('')}</div>`}
+function byChips(){const B=[...new Set(Object.values(FG).filter(f=>f.ts&&f.by&&f.kind!=='presence'&&f.kind!=='maint'&&f.kind!=='watch').map(f=>f.by))].slice(0,6);return`<div class="chips">${[''].concat(B).map(b=>`<button class="chip" data-a="jBy" data-v="${esc(b)}" aria-pressed="${(ui.jb||'')===b}">${b?esc(b):'Tous les auteurs'}</button>`).join('')}</div>`}
 const JTYPE=k=>{const t=ui.jf;return t==='farces'?FARCES.some(x=>x[0]===k):t==='sab'?k==='sab':t==='alerte'?k==='alerte':['annonce','lockall','unlock','unlockall','kick','reload','beep','theme','blocktab'].includes(k)};
 function homeExtra(){
   const al=Object.values(FG).filter(f=>f.kind==='alerte').sort((a,b)=>b.ts-a.ts).slice(0,3);
@@ -1080,7 +1080,7 @@ function sheetFarce(){
     <h4 class="fsec">Alertes ventes suspectes</h4><p class="sub">Retour ≥ 50 €, remise ≥ 50 % ou ticket ≥ 500 €. Une bannière s'affiche ici dès qu'il y en a une.</p>${al.map(f=>`<div class="frow"><span><b>${esc(f.text)}</b><br><span class="lgt">${esc(f.by||'')} · ${esc(dtf.format(new Date(f.ts)))}</span></span></div>`).join('')||'<p class="sub">Aucune alerte.</p>'}`;
   }else if(T==='log'){
     const lab=k=>(FARCES.find(x=>x[0]===k)||[0,{annonce:'Annonce équipe',lockall:'Verrouillage général',unlock:'Déverrouillage',unlockall:'Tout déverrouillé',stop:'Arrêt d\'urgence',alerte:'Alerte vente suspecte',sab:'Sabotage de menu',reload:'Rechargement forcé',beep:'Son envoyé',theme:'Thème forcé',blocktab:'Onglet bloqué',kick:'Déconnexion forcée',sharereq:'Demande de partage d\'écran'}[k]||k])[1];
-    const L=Object.values(FG).filter(f=>f.ts&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence').sort((a,b)=>b.ts-a.ts).filter(f=>(!ui.jf||JTYPE(f.kind))&&(!ui.jb||f.by===ui.jb)).slice(0,100);
+    const L=Object.values(FG).filter(f=>f.ts&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence'&&f.kind!=='watch').sort((a,b)=>b.ts-a.ts).filter(f=>(!ui.jf||JTYPE(f.kind))&&(!ui.jb||f.by===ui.jb)).slice(0,100);
     body=`<div class="chips">${[['','Tous'],['farces','Farces'],['sab','Sabotages'],['alerte','Alertes'],['ctl','Contrôle']].map(x=>`<button class="chip" data-a="jFilt" data-v="${x[0]}" aria-pressed="${(ui.jf||'')===x[0]}">${x[1]}</button>`).join('')}</div>${byChips()}<button class="btn ghost small" data-a="jCsv">Exporter (CSV)</button><p class="sub">Les 100 derniers événements envoyés. Vider le journal ne coupe rien.</p>${L.map(f=>`<div class="frow"><span><b>${esc(lab(f.kind))}</b><br><span class="lgt">${esc(f.by||'')} · ${esc(dtf.format(new Date(f.ts)))}</span></span>${FARCES.some(x=>x[0]===f.kind)?`<button class="btn ghost small" data-a="farcePrev" data-v="${esc(f.kind)}">Revoir</button>`:''}</div>`).join('')||'<p class="sub">Journal vide.</p>'}${L.length?'<button class="btn ghost" data-a="logClear">Vider le journal</button>':''}`;
   }else if(T==='team'){
     const st=staffList();
@@ -1948,7 +1948,7 @@ const A={
   async gReset(){delete FG._gate;if(farceSeen)farceSeen.add('_gate');await Store.del('farces','_gate').catch(()=>{});try{sessionStorage.setItem('caisse-gate',GATE_DEF+'|'+(Date.now()+12*36e5));localStorage.removeItem('caisse-gate')}catch(x){}toast('Code d\'origine rétabli')},
   fFav(el){const v=el.dataset.v;let a=favList();a=a.includes(v)?a.filter(x=>x!==v):[v].concat(a);try{localStorage.setItem('caisse-ffav',JSON.stringify(a))}catch(e){}const g=document.querySelector('.fgrid');if(g)g.innerHTML=farceGridHtml()},
   farceRand(){const l=FARCES.filter(f=>f[0].indexOf('a_')!==0&&FCAT[f[0]]!=='Faux virus');const f=l[Math.floor(Math.random()*l.length)];A.farceSend({dataset:{v:f[0]}});toast('Surprise : '+f[1])},
-  logClear(){Object.values(FG).filter(f=>f.id&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence').forEach(f=>{delete FG[f.id];Store.del('farces',f.id).catch(()=>{})});renderSheet()},
+  logClear(){Object.values(FG).filter(f=>f.id&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence'&&f.kind!=='watch').forEach(f=>{delete FG[f.id];Store.del('farces',f.id).catch(()=>{})});renderSheet()},
   farceLogin(){const v=($('#fCode')||{}).value,e=$('#fErr');if(Date.now()<(ui.f0u||0)){if(e)e.textContent='Patientez '+Math.ceil((ui.f0u-Date.now())/1000)+' s.';return}
     if(v===fCode()){ui.f0=0;ui.farceOk=true;renderSheet()}else{ui.f0=(ui.f0||0)+1;if(ui.f0>=3){ui.f0=0;ui.f0u=Date.now()+30000}if(e)e.textContent=ui.f0u>Date.now()?'Trop d\'essais. Patientez 30 s.':'Code incorrect.'}},
   farceStop(){farceOff();const id='s'+Date.now().toString(36);if(farceSeen)farceSeen.add(id);Store.set('farces',id,{id,kind:'stop',by:'Agent X',ts:Date.now()}).catch(()=>{});toast('Arrêt d\'urgence envoyé')},
@@ -2327,7 +2327,7 @@ const A={
   fHide(el){const a=fhid();if(!a.includes(el.dataset.v))a.push(el.dataset.v);try{localStorage.setItem('caisse-fhide',JSON.stringify(a))}catch(e){}renderSheet()},
   fUnhide(){try{localStorage.removeItem('caisse-fhide')}catch(e){}renderSheet()},
   jFilt(el){ui.jf=el.dataset.v||'';renderSheet()},
-  async jCsv(){const rows=[['date','type','par','caisse_ciblee']];Object.values(FG).filter(f=>f.ts&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence').sort((a,b)=>b.ts-a.ts).forEach(f=>rows.push([new Date(f.ts).toISOString(),f.kind,f.by||'',f.to||'']));await saveFile('journal-007.csv',csv(rows))},
+  async jCsv(){const rows=[['date','type','par','caisse_ciblee']];Object.values(FG).filter(f=>f.ts&&f.kind&&f.kind!=='maint'&&f.kind!=='sched'&&f.kind!=='presence'&&f.kind!=='watch').sort((a,b)=>b.ts-a.ts).forEach(f=>rows.push([new Date(f.ts).toISOString(),f.kind,f.by||'',f.to||'']));await saveFile('journal-007.csv',csv(rows))},
   surprise(){ui.sur=!ui.sur;clearTimeout(ui.surT);const go=()=>{if(!ui.sur)return;const l=FARCES.filter(x=>!fhid().includes(x[0])&&FCAT[x[0]]!=='Faux virus');if(!l.length)return;const f=l[Math.floor(Math.random()*l.length)];const id='r'+Date.now().toString(36);if(farceSeen)farceSeen.add(id);Store.set('farces',id,{id,kind:f[0],by:'Mode surprise',ts:Date.now()}).catch(()=>{});ui.surT=setTimeout(go,(5+Math.random()*15)*60000)};if(ui.sur)ui.surT=setTimeout(go,(5+Math.random()*15)*60000);toast(ui.sur?'Mode surprise activé':'Mode surprise coupé');renderSheet()},
   async codeSet(){const v=(($('#newCode')||{}).value||'').trim();if(!/^\d{4}$/.test(v))return toast('Le code doit faire 4 chiffres.');FG._fcode={id:'_fcode',kind:'maint',code:v,ts:Date.now()};if(farceSeen)farceSeen.add('_fcode');try{await Store.set('farces','_fcode',FG._fcode);toast('Code 007 modifié')}catch(e){toast('Enregistrement impossible')}},
   ctReload(el){A.ctSend(el.dataset.id,{kind:'reload'});toast('Rechargement envoyé')},
@@ -3081,214 +3081,99 @@ try{var ac=new(window.AudioContext||window.webkitAudioContext)();[1318.5,1568,20
 
 
 (function(){
-/* ===== Partage d'écran (WebRTC / PeerJS) =====
-   Appareil partagé : accepte la demande -> le navigateur demande l'autorisation -> flux vidéo.
-   Responsable : « Voir l'écran » -> demande envoyée -> connexion automatique dès l'acceptation. */
-var PEER_URLS=['https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js','https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'];
-var ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478'},
- {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turns:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}],
- iceCandidatePoolSize:4};
-var PID=function(t){return 'cxw-'+String(t).replace(/[^A-Za-z0-9_-]/g,'')};
-var loadP=null;
-function loadPeer(){
-  if(window.Peer)return Promise.resolve();
-  if(loadP)return loadP;
-  loadP=(async function(){
-    for(var i=0;i<PEER_URLS.length;i++){
-      try{
-        await new Promise(function(ok,ko){var s=document.createElement('script');s.src=PEER_URLS[i];s.async=true;
-          var t=setTimeout(function(){s.remove();ko(new Error('délai'))},9000);
-          s.onload=function(){clearTimeout(t);ok()};s.onerror=function(){clearTimeout(t);s.remove();ko(new Error('erreur'))};
-          document.head.appendChild(s)});
-        if(window.Peer)return;
-      }catch(e){}
-    }
-    loadP=null;throw new Error('Impossible de charger le module de partage (vérifiez internet)');
-  })();
-  return loadP;
-}
-function tuneSender(call){
-  /* Débit élevé + fluidité côté émetteur */
-  try{
-    var pc=call.peerConnection;if(!pc)return;
-    pc.getSenders().forEach(function(s){
-      if(!s.track||s.track.kind!=='video')return;
-      var p=s.getParameters();if(!p.encodings||!p.encodings.length)p.encodings=[{}];
-      p.encodings[0].maxBitrate=3500000;p.encodings[0].maxFramerate=30;
-      p.degradationPreference='maintain-framerate';
-      s.setParameters(p).catch(function(){});
-    });
-  }catch(e){}
-}
-function tuneReceiver(call){
-  /* Latence minimale côté spectateur */
-  try{
-    var pc=call.peerConnection;if(!pc)return;
-    pc.getReceivers().forEach(function(r){
-      try{if('playoutDelayHint' in r)r.playoutDelayHint=0}catch(e){}
-      try{if('jitterBufferTarget' in r)r.jitterBufferTarget=0}catch(e){}
-    });
-  }catch(e){}
-}
-/* Flux factice : PeerJS exige un flux pour appeler (l'ancienne version plantait ici) */
-function dummyStream(){
-  try{var c=document.createElement('canvas');c.width=c.height=2;c.getContext('2d').fillRect(0,0,2,2);var s=c.captureStream(1);if(s&&s.getTracks().length)return s}catch(e){}
-  try{var ac=new(window.AudioContext||window.webkitAudioContext)();var d=ac.createMediaStreamDestination();var o=ac.createOscillator();var g=ac.createGain();g.gain.value=0;o.connect(g);g.connect(d);o.start();return d.stream}catch(e){}
-  return null;
-}
+/* ===== Suivi d'écran (miroir de l'appli, pas de capture caméra/écran) =====
+   007 demande à voir une caisse : la caisse envoie en continu un aperçu HTML de ce
+   qu'elle affiche (page, panier, panneau ouvert), sans lui rien demander — 007 garde
+   la main, la caisse ne peut ni refuser ni arrêter l'aperçu. */
 
-/* ================= CÔTÉ APPAREIL PARTAGÉ ================= */
-var stream=null,peer=null,calls=[],sbar=null,reqSeen={},reqCard=null;
-function bar(){
-  if(!stream){if(sbar){sbar.remove();sbar=null}return}
-  if(!sbar){
-    sbar=document.createElement('div');sbar.id='peerShareBar';
-    sbar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99997;background:#b3202a;color:#fff;border-radius:999px;padding:8px 8px 8px 16px;display:flex;gap:10px;align-items:center;font:600 13px system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.35)';
-    document.body.appendChild(sbar);
-  }
-  var n=calls.filter(function(c){return c.open}).length;
-  sbar.innerHTML='<span>● Écran partagé'+(n?' · '+n+' spectateur'+(n>1?'s':''):' · en attente')+'</span><button style="background:#fff;color:#b3202a;border-radius:999px;padding:7px 14px;font-weight:700">Arrêter</button>';
-  sbar.querySelector('button').onclick=stopShare;
+/* ================= CÔTÉ CAISSE (émetteur) ================= */
+var mirrorOn=false,mirrorTimer=null,mirrorIdle=null,mirrorHash='',mbar=null;
+function mbarShow(){
+  if(mbar)return;
+  mbar=document.createElement('div');mbar.id='mirrorBar';
+  mbar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:99997;background:#055548;color:#fff;border-radius:999px;padding:8px 16px;font:600 12.5px system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3);pointer-events:none;white-space:nowrap';
+  mbar.textContent='👁 Écran suivi par le responsable';
+  document.body.appendChild(mbar);
 }
-function stopShare(){
-  calls.forEach(function(c){try{c.close()}catch(e){}});calls=[];
-  if(stream){stream.getTracks().forEach(function(t){try{t.onended=null;t.stop()}catch(e){}});stream=null}
-  if(peer){try{peer.destroy()}catch(e){}peer=null}
-  bar();
-}
-async function startShare(){
-  if(stream){toast('Partage déjà actif.');return true}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){
-    toast('Cet appareil ne permet pas le partage d’écran (iPhone/iPad non pris en charge). Utilisez un ordinateur ou Android.');return false}
+function mbarHide(){if(mbar){mbar.remove();mbar=null}}
+function mirrorStop(){mirrorOn=false;clearTimeout(mirrorTimer);mirrorTimer=null;clearTimeout(mirrorIdle);mirrorIdle=null;mbarHide()}
+function mirrorTick(){
+  if(!mirrorOn)return;
   try{
-    var loading=loadPeer();
-    var s;
-    try{s=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:30,max:30},width:{max:1920},height:{max:1080},cursor:'always'},audio:false})}
-    catch(e1){s=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false})}
-    stream=s;
-    var vt=s.getVideoTracks()[0];
-    try{vt.contentHint='detail'}catch(e){}
-    vt.addEventListener('ended',stopShare);
-    await loading;
-    await openPeer();
-    bar();toast('Écran partagé.');
-    return true;
-  }catch(e){
-    stopShare();
-    var m=(e&&e.name==='NotAllowedError')?'Partage refusé ou annulé.':((e&&e.message)||'Partage impossible.');
-    toast(m);return false;
-  }
+    var a=document.getElementById('app'),s=document.getElementById('sheetRoot');
+    var appHtml=a?a.innerHTML:'',shHtml=s?s.innerHTML:'';
+    var th=document.documentElement.getAttribute('data-theme')||'';
+    var ac=document.documentElement.style.getPropertyValue('--accent-base')||'';
+    var cl=document.documentElement.className||'';
+    var sig=appHtml.length+'|'+shHtml.length+'|'+th+'|'+ac+'|'+cl;
+    if(sig!==mirrorHash){
+      mirrorHash=sig;
+      Store.set('mirror',TAB,{id:TAB,by:who()||'Caisse',theme:th,accent:ac,cls:cl,html:appHtml,sheet:shHtml,ts:Date.now()}).catch(function(){});
+    }
+  }catch(e){}
+  mirrorTimer=setTimeout(mirrorTick,350);
 }
-function openPeer(){
-  return new Promise(function(ok,ko){
-    var done=false,p=new Peer(PID(TAB),{debug:0,config:ICE});peer=p;
-    var to=setTimeout(function(){if(!done){done=true;ko(new Error('Serveur de connexion injoignable'))}},12000);
-    p.on('open',function(){if(done)return;done=true;clearTimeout(to);ok()});
-    p.on('call',function(call){
-      if(!stream){try{call.close()}catch(e){}return}
-      call.answer(stream);calls.push(call);
-      var tries=0,t=setInterval(function(){tuneSender(call);if(++tries>6)clearInterval(t)},700);
-      var drop=function(){clearInterval(t);calls=calls.filter(function(c){return c!==call});bar()};
-      call.on('close',drop);call.on('error',drop);
-      call.on('stream',function(){});
-      setTimeout(bar,400);
-    });
-    p.on('disconnected',function(){try{if(peer===p&&!p.destroyed)p.reconnect()}catch(e){}});
-    p.on('error',function(e){
-      if(!done){done=true;clearTimeout(to);ko(new Error('Connexion impossible : '+((e&&e.type)||'erreur')))}
-      else if(e&&e.type==='unavailable-id'){toast('Identifiant déjà utilisé, rechargez la page.')}
-    });
-  });
+function mirrorStart(){if(mirrorOn)return;mirrorOn=true;mbarShow();mirrorHash='';mirrorTick()}
+function mirrorKeepAlive(){
+  clearTimeout(mirrorIdle);
+  mirrorIdle=setTimeout(function(){mirrorStop();Store.del('mirror',TAB).catch(function(){})},9000);
 }
 window.xwSync=function(m){
   try{
-    if(!m)return;
-    Object.keys(m).forEach(function(k){
-      var f=m[k];if(!f||f.kind!=='sharereq'||f.to!==TAB||reqSeen[f.id])return;
-      reqSeen[f.id]=1;Store.del('farces',f.id).catch(function(){});if(Date.now()-f.ts>45000)return;
-      if(stream)return;
-      if(!bossDev())toast('Partage d’écran demandé par '+(f.by||'le responsable'));
-      startShare();
-    });
+    if(!m)return;var fresh=false;
+    Object.keys(m).forEach(function(k){var f=m[k];if(f&&f.kind==='watch'&&f.to===TAB&&Date.now()-f.ts<8000)fresh=true});
+    if(fresh){mirrorStart();mirrorKeepAlive()}
   }catch(e){}
 };
-window.xwShare=startShare;window.xwStop=stopShare;
-window.addEventListener('pagehide',function(){if(stream)stopShare()});
+window.addEventListener('pagehide',function(){if(mirrorOn)Store.del('mirror',TAB).catch(function(){})});
 
-/* ================= CÔTÉ RESPONSABLE ================= */
-var viewer=null;
+/* ================= CÔTÉ RESPONSABLE (007, lecteur) ================= */
+var viewer=null,mirrorSubOn=false,MIR={};
+function ensureMirrorSub(){
+  if(mirrorSubOn)return;mirrorSubOn=true;
+  Store.sub('mirror',function(m){MIR=m||{};if(viewer)viewer.update()});
+}
 window.xwOpen=function(id,name){
   if(id===TAB)return toast('C’est cet appareil.');
   if(viewer)viewer.close();
+  ensureMirrorSub();
   var root=document.createElement('div');root.id='xwRoot';
   root.style.cssText='position:fixed;inset:0;z-index:99999;background:#000;color:#fff;display:flex;flex-direction:column;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px));gap:8px';
-  root.innerHTML='<header style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name||'Écran partagé')+'</b><span style="display:flex;gap:6px"><button id="xwFs" class="btn ghost small" style="color:#fff;border-color:#555">Plein écran</button><button id="xwX" class="btn small">Fermer</button></span></header>'
-   +'<div style="position:relative;flex:1;min-height:0;display:flex"><video id="peerVideo" autoplay muted playsinline disablepictureinpicture style="width:100%;height:100%;object-fit:contain;background:#111;border-radius:10px"></video><div id="xwOverlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;pointer-events:none"></div></div>'
+  root.innerHTML='<header style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(name||'Écran de la caisse')+'</b><button id="xwX" class="btn small">Fermer</button></header>'
+   +'<div style="position:relative;flex:1;min-height:0;display:flex;border-radius:12px;overflow:hidden;background:#111"><iframe id="xwFrame" title="Aperçu de la caisse" style="width:100%;height:100%;border:0;background:#111"></iframe><div id="xwOverlay" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;pointer-events:none"></div></div>'
    +'<div id="peerViewerStatus" style="font-size:13px;opacity:.8">Connexion…</div>';
   document.body.appendChild(root);
-  var vid=root.querySelector('#peerVideo'),st=root.querySelector('#peerViewerStatus'),ov=root.querySelector('#xwOverlay');
-  var p=null,call=null,closed=false,reqId=null,retryT=null,attemptT=null,asked=false,startedAt=Date.now(),live=false,dummy=null;
+  var frame=root.querySelector('#xwFrame'),st=root.querySelector('#peerViewerStatus'),ov=root.querySelector('#xwOverlay');
+  var closed=false,reqT=null,staleT=null,lastTs=0,gotFirst=false;
   function say(t,big){st.textContent=t;ov.innerHTML=big?'<div style="background:rgba(0,0,0,.65);border-radius:14px;padding:14px 18px;max-width:320px">'+esc(big)+'</div>':''}
-  function cleanReq(){if(reqId){Store.del('farces',reqId).catch(function(){});reqId=null}}
+  function sendWatch(){
+    if(closed)return;
+    Store.set('farces','mw_'+id,{id:'mw_'+id,kind:'watch',to:id,by:who()||'Le responsable',ts:Date.now()}).catch(function(){});
+    reqT=setTimeout(sendWatch,3000);
+  }
+  var frameCss=(function(){var s=document.querySelector('style');return s?s.textContent:''})();
+  function update(){
+    if(closed)return;
+    var f=MIR[id];
+    if(!f){
+      if(gotFirst){clearTimeout(staleT);staleT=setTimeout(function(){if(!closed)say('Connexion perdue','L’écran ne répond plus.')},6500)}
+      else say('Connexion…','En attente de la caisse « '+(name||'')+' »…');
+      return;
+    }
+    if(f.ts===lastTs)return;lastTs=f.ts;clearTimeout(staleT);
+    if(Date.now()-f.ts>15000){say('En attente…','Dernière image trop ancienne, nouvelle tentative…');return}
+    gotFirst=true;say('En direct','');
+    var doc='<!doctype html><html'+(f.theme?' data-theme="'+esc(f.theme)+'"':'')+' class="'+esc(f.cls||'')+'" style="'+(f.accent?'--accent-base:'+esc(f.accent)+';':'')+'height:100%"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+frameCss+'\nhtml,body{height:100%}body{margin:0;overflow:auto;-webkit-user-select:none;user-select:none}</style></head><body><div id="app">'+(f.html||'')+'</div><div id="sheetRoot">'+(f.sheet||'')+'</div></body></html>';
+    frame.srcdoc=doc;
+  }
   function close(){
-    closed=true;clearTimeout(retryT);clearTimeout(attemptT);cleanReq();
-    try{if(call)call.close()}catch(e){}try{if(p)p.destroy()}catch(e){}
-    try{if(dummy)dummy.getTracks().forEach(function(t){t.stop()})}catch(e){}
-    try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}
+    closed=true;clearTimeout(reqT);clearTimeout(staleT);
+    Store.del('farces','mw_'+id).catch(function(){});
     root.remove();if(viewer&&viewer.root===root)viewer=null;
   }
-  viewer={root:root,close:close};
+  viewer={root:root,close:close,update:update};
   root.querySelector('#xwX').onclick=close;
-  root.querySelector('#xwFs').onclick=function(){try{(vid.requestFullscreen||vid.webkitRequestFullscreen||vid.webkitEnterFullscreen).call(vid)}catch(e){}};
-  vid.onclick=function(){vid.play().catch(function(){})};
-  function sendRequest(){
-    if(asked)return;asked=true;
-    var k='q'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);reqId=k;
-    if(farceSeen)farceSeen.add(k);
-    Store.set('farces',k,{id:k,kind:'sharereq',to:id,by:who()||'Le responsable',ts:Date.now()}).catch(function(){say('Envoi de la demande impossible','Demande impossible : vérifiez la connexion.')});
-    say('Demande envoyée…','Lancement du partage sur la caisse « '+(name||'')+' »…');
-  }
-  function schedule(ms){clearTimeout(retryT);if(closed||live)return;retryT=setTimeout(attempt,ms)}
-  function attempt(){
-    if(closed||live||!p||p.destroyed)return;
-    if(Date.now()-startedAt>120000){say('Délai dépassé','La caisse n’a pas accepté le partage. Réessayez.');cleanReq();return}
-    if(!dummy)dummy=dummyStream();
-    if(!dummy){say('Navigateur incompatible','Ce navigateur ne peut pas recevoir de flux.');return}
-    try{if(call)call.close()}catch(e){}
-    call=p.call(PID(id),dummy);
-    if(!call){say('Connexion impossible');return}
-    var mine=call;
-    mine.on('stream',function(s){
-      if(closed||call!==mine)return;
-      live=true;clearTimeout(retryT);clearTimeout(attemptT);cleanReq();
-      vid.srcObject=s;
-      var go=function(){var pr=vid.play();if(pr&&pr.catch)pr.catch(function(){say('Touchez la vidéo pour lancer','Touchez l’écran pour lancer la vidéo')})};
-      go();say('En direct','');
-      var n=0,ti=setInterval(function(){tuneReceiver(mine);if(++n>6)clearInterval(ti)},600);
-      try{var pc=mine.peerConnection;pc.addEventListener('iceconnectionstatechange',function(){
-        if(closed||call!==mine)return;var s2=pc.iceConnectionState;
-        if(s2==='failed'||s2==='closed'){live=false;say('Connexion perdue, reconnexion…');startedAt=Date.now();schedule(800)}
-        else if(s2==='disconnected'){say('Connexion instable…')}
-        else if(s2==='connected'||s2==='completed'){say('En direct')}})}catch(e){}
-    });
-    mine.on('close',function(){if(closed||call!==mine)return;if(live){live=false;say('Partage terminé','Le partage d’écran est terminé.');}else schedule(1500)});
-    mine.on('error',function(){if(!closed&&call===mine&&!live)schedule(1500)});
-    clearTimeout(attemptT);
-    attemptT=setTimeout(function(){if(!live&&!closed&&call===mine){try{mine.close()}catch(e){}schedule(300)}},9000);
-  }
-  say('Connexion…');
-  loadPeer().then(function(){
-    if(closed)return;
-    p=new Peer(undefined,{debug:0,config:ICE});
-    p.on('open',function(){if(!closed)attempt()});
-    p.on('disconnected',function(){try{if(!closed&&!p.destroyed)p.reconnect()}catch(e){}});
-    p.on('error',function(e){
-      if(closed)return;var t=e&&e.type;
-      if(t==='peer-unavailable'){sendRequest();clearTimeout(attemptT);schedule(2000)}
-      else if(t==='network'||t==='server-error'||t==='socket-error'||t==='socket-closed'){say('Serveur injoignable, nouvelle tentative…');schedule(3000)}
-      else say('Connexion impossible : '+(t||'erreur'));
-    });
-  }).catch(function(e){say(e.message,e.message)});
+  update();sendWatch();
 };
 })();
 
